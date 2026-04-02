@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
+import api from "../service/api";
 
 interface EditColegiadoModalProps {
   isOpen: boolean;
@@ -12,9 +13,9 @@ interface EditColegiadoModalProps {
   colegiado?: any;
 }
 
-export function EditColegiadoModal({ isOpen, onClose, onSave }: EditColegiadoModalProps) {
-  // Estado com todas as colunas que você definiu
-  const [formData, setFormData] = useState({
+export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado }: EditColegiadoModalProps) {
+
+  const defaultFormData = {
     nome_colegiado: "",
     status_vigencia: "",
     objeto_finalidade: "",
@@ -26,7 +27,20 @@ export function EditColegiadoModal({ isOpen, onClose, onSave }: EditColegiadoMod
     atuacao_midr: "",
     numero_processo: "",
     subcolegiado_ligado_ao: ""
-  });
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
+
+  useEffect(() => {
+    if (colegiado) {
+      setFormData({
+        ...defaultFormData,
+        nome_colegiado: colegiado.nome || ""
+      });
+    } else {
+      setFormData(defaultFormData);
+    }
+  }, [colegiado]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,19 +48,13 @@ export function EditColegiadoModal({ isOpen, onClose, onSave }: EditColegiadoMod
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/colegiados", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        alert("Colegiado salvo com sucesso no banco!");
-        onSave(); // Recarrega a lista
-        onClose(); // Fecha o modal
-      }
+      await api.createColegiado(formData);
+      alert("Colegiado salvo com sucesso no banco!");
+      onSave();
+      onClose();
     } catch (error) {
       console.error("Erro ao conectar com o backend:", error);
+      alert("Não foi possível salvar o colegiado. Veja o console para mais detalhes.");
     }
   };
 

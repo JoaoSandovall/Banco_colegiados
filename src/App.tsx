@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from './services/api';
+import api from './service/api';
 import { Sidebar } from './components/Sidebar';
 import { FilterSection } from './components/FilterSection';
 import { RepresentantesFilterSection } from './components/RepresentantesFilterSection';
@@ -10,11 +10,13 @@ import { EditColegiadoModal } from './components/EditColegiadoModal';
 import { ViewRepresentacoesModal } from './components/ViewRepresentacoesModal';
 import { EditRepresentanteBasicoModal } from './components/EditRepresentanteBasicoModal';
 import { Menu } from 'lucide-react';
+import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
 
 export default function App() {
   const [activeMenuItem, setActiveMenuItem] = useState('colegiados');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Modal state for editing colegiado
   const [editingColegiado, setEditingColegiado] = useState<{ id: string; nome: string } | null>(null);
@@ -137,10 +139,16 @@ export default function App() {
   };
 
   // Table action handlers
+  const handleOpenNewColegiado = () => {
+    setEditingColegiado(null);
+    setIsEditModalOpen(true);
+  };
+
   const handleEditColegiado = (id: string) => {
     const colegiado = colegiados.find(c => c.id === id);
     if (colegiado) {
       setEditingColegiado({ id: colegiado.id, nome: colegiado.nome });
+      setIsEditModalOpen(true);
     }
   };
 
@@ -178,14 +186,17 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-[#f3f4f6]">
-      {/* Edit Colegiado Modal */}
-      <EditColegiadoModal
-        isOpen={!!editingColegiado}
-        onClose={() => setEditingColegiado(null)}
+  
+      <EditColegiadoModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        onSave={() => {
+          // Recarrega os dados do Python após salvar
+          api.getColegiados().then(data => setColegiados(data));
+        }} 
         colegiado={editingColegiado}
       />
 
-      {/* View Representacoes Modal */}
       <ViewRepresentacoesModal
         isOpen={!!viewingRepresentacoes}
         onClose={() => setViewingRepresentacoes(null)}
@@ -255,6 +266,15 @@ export default function App() {
               />
 
               {/* Table */}
+
+              <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Gestão de Colegiados</h1>
+              {/* Este é o botão que abre o Modal */}
+              <Button onClick={handleOpenNewColegiado}>
+                + Novo Colegiado
+              </Button>
+            </div>
+
               <div className="mt-6">
                 <ColegiadosTable
                   colegiados={colegiados}

@@ -19,7 +19,7 @@ class Colegiado(Base):
     subcolegiado_ligado_ao = Column(String, nullable=True)
     representantes = relationship("Representante", back_populates="colegiado_rel")
 
-class Representantes(Base):
+class Representante(Base):
     __tablename__ = "representantes"
 
     id = Column(Integer, primary_key=True, index=True)
