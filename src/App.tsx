@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from './services/api';
 import { Sidebar } from './components/Sidebar';
 import { FilterSection } from './components/FilterSection';
 import { RepresentantesFilterSection } from './components/RepresentantesFilterSection';
@@ -50,148 +51,21 @@ export default function App() {
   });
   const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
 
-  // Mock data based on the screenshot with colored tags
-  const [colegiados, setColegiados] = useState([
-    {
-      id: '1',
-      nome: 'Comitê de Integração de Políticas Ambientais (CIPAM)',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 8,
-      tags: [
-        { id: '1', text: 'Urgente', color: 'red' },
-        { id: '2', text: 'Prioritário', color: 'orange' }
-      ] as TagItem[],
-    },
-    {
-      id: '2',
-      nome: 'Comitê de mobilidade, habitação, infraestrutura econômica e urbana',
-      status: 'Em estruturação' as const,
-      numeroRepresentantes: 0,
-      tags: [] as TagItem[],
-    },
-    {
-      id: '3',
-      nome: 'Conselho Nacional de Recursos Hídricos (CNRH)',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 20,
-      tags: [
-        { id: '3', text: 'Revisar documentação', color: 'blue' }
-      ] as TagItem[],
-    },
-    {
-      id: '4',
-      nome: 'Comitê Executivo do Programa de Proteção Integrada de Fronteiras (CEPPIF)',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 10,
-      tags: [] as TagItem[],
-    },
-    {
-      id: '5',
-      nome: 'Conselho Nacional de Turismo (CNT)',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 4,
-      destacado: true,
-      tags: [
-        { id: '4', text: 'Aguardando resposta', color: 'yellow' }
-      ] as TagItem[],
-    },
-    {
-      id: '6',
-      nome: 'Estratégia Brasil 2050',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 8,
-      tags: [] as TagItem[],
-    },
-    {
-      id: '7',
-      nome: 'Grupo de Trabalho - GT Calamidades e Situações de Emergências',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 2,
-      tags: [
-        { id: '5', text: 'Atenção especial', color: 'red' }
-      ] as TagItem[],
-    },
-    {
-      id: '8',
-      nome: 'Grupo Técnico de Trabalho (GTT) sobre Territórios e Participação Social nas Políticas Públicas do Governo Federal',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 6,
-      tags: [] as TagItem[],
-    },
-    {
-      id: '9',
-      nome: 'Subcomitês de infraestrutura econômica e urbana (COARIDE)',
-      status: 'Ativo' as const,
-      numeroRepresentantes: 8,
-      tags: [] as TagItem[],
-    },
-  ]);
+  const [colegiados, setColegiados] = useState<any[]>([]);
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const data = await api.getColegiados();
+      setColegiados(data); // Agora a tabela vai mostrar o que vem do Python
+    } catch (error) {
+      console.error("Erro ao carregar banco de dados:", error);
+    }
+  };
+  fetchData();
+}, []);
 
   // Mock data for Representantes page based on the screenshot with colored tags
-  const [representantes, setRepresentantes] = useState([
-    { 
-      id: '1', 
-      nome: 'Fernando Anselmo', 
-      status: 'Ativo' as const, 
-      tags: [
-        { id: '6', text: 'Contatar urgente', color: 'red' }
-      ] as TagItem[]
-    },
-    { 
-      id: '2', 
-      nome: 'Barbara Caldeirão', 
-      status: 'Inativo' as const, 
-      tags: [] as TagItem[]
-    },
-    { 
-      id: '3', 
-      nome: 'João Azevedo', 
-      status: 'Ativo' as const, 
-      tags: [
-        { id: '7', text: 'Verificar dados', color: 'blue' }
-      ] as TagItem[]
-    },
-    { 
-      id: '4', 
-      nome: 'Péricles Conceição', 
-      status: 'Ativo' as const, 
-      tags: [] as TagItem[]
-    },
-    { 
-      id: '5', 
-      nome: 'Sabrina Lima', 
-      status: 'Ativo' as const, 
-      tags: [
-        { id: '8', text: 'Pendente', color: 'yellow' }
-      ] as TagItem[]
-    },
-    { 
-      id: '6', 
-      nome: 'Renato Rocha', 
-      status: 'Ativo' as const, 
-      tags: [] as TagItem[]
-    },
-    { 
-      id: '7', 
-      nome: 'Gustavo Pedra', 
-      status: 'Ativo' as const, 
-      tags: [] as TagItem[]
-    },
-    { 
-      id: '8', 
-      nome: 'Marina Cavalcante', 
-      status: 'Ativo' as const, 
-      tags: [
-        { id: '9', text: 'OK', color: 'green' }
-      ] as TagItem[]
-    },
-    { 
-      id: '9', 
-      nome: 'Cleber Teixera', 
-      status: 'Ativo' as const, 
-      tags: [] as TagItem[]
-    },
-  ]);
+  const [representantes, setRepresentantes] = useState<any[]>([]);
 
   const totalColegiados = 183;
   const totalRepresentantes = 502;
