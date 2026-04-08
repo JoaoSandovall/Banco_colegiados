@@ -19,13 +19,13 @@ export default function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   // Modal state for editing colegiado
-  const [editingColegiado, setEditingColegiado] = useState<{ id: string; nome: string } | null>(null);
+  const [editingColegiado, setEditingColegiado] = useState<{ id: number; nome_colegiado: string } | null>(null);
   
   // Modal state for viewing representacoes
-  const [viewingRepresentacoes, setViewingRepresentacoes] = useState<{ id: string; nome: string } | null>(null);
+  const [viewingRepresentacoes, setViewingRepresentacoes] = useState<{ id: number; nome?: string; nome_colegiado?: string } | null>(null);
   
   // Modal state for editing representante basico
-  const [editingRepresentante, setEditingRepresentante] = useState<{ id: string; nome: string } | null>(null);
+  const [editingRepresentante, setEditingRepresentante] = useState<{ id: number; nome: string } | null>(null);
   
   // Filters for Colegiados page
   const [colegiadosFilters, setColegiadosFilters] = useState({
@@ -58,7 +58,12 @@ export default function App() {
   const fetchData = async () => {
     try {
       const data = await api.getColegiados();
-      setColegiados(data); // Agora a tabela vai mostrar o que vem do Python
+      const mappedData = data.map((col: any) => ({
+        ...col,
+        numeroRepresentantes: 0, // TODO: calculate from representatives
+        tags: [], // TODO: add tags logic
+      }));
+      setColegiados(mappedData);
     } catch (error) {
       console.error("Erro ao carregar banco de dados:", error);
     }
@@ -99,7 +104,7 @@ export default function App() {
     setColegiadosTags(colegiadosTags.filter(t => t !== tag));
   };
 
-  const handleColegiadoTagsChange = (id: string, tags: TagItem[]) => {
+  const handleColegiadoTagsChange = (id: number, tags: TagItem[]) => {
     setColegiados(prev => 
       prev.map(col => col.id === id ? { ...col, tags } : col)
     );
@@ -144,22 +149,25 @@ export default function App() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditColegiado = (id: string) => {
+  const handleEditColegiado = (id: number) => {
     const colegiado = colegiados.find(c => c.id === id);
     if (colegiado) {
-      setEditingColegiado({ id: colegiado.id, nome: colegiado.nome });
+      setEditingColegiado({ id: colegiado.id, nome_colegiado: colegiado.nome_colegiado });
       setIsEditModalOpen(true);
     }
   };
 
-  const handleViewRepresentantes = (id: string) => {
-    console.log('Viewing representantes for colegiado:', id);
+  const handleViewRepresentantes = (id: number) => {
+    const colegiado = colegiados.find(c => c.id === id);
+    if (colegiado) {
+      setViewingRepresentacoes({ id: colegiado.id, nome_colegiado: colegiado.nome_colegiado });
+    }
   };
 
   const handleViewRepresentacoes = (id: string) => {
     const representante = representantes.find(r => r.id === id);
     if (representante) {
-      setViewingRepresentacoes({ id: representante.id, nome: representante.nome });
+      setViewingRepresentacoes({ id: parseInt(id), nome: representante.nome });
     }
   };
 
@@ -200,7 +208,8 @@ export default function App() {
       <ViewRepresentacoesModal
         isOpen={!!viewingRepresentacoes}
         onClose={() => setViewingRepresentacoes(null)}
-        representante={viewingRepresentacoes}
+        colegiado={viewingRepresentacoes && viewingRepresentacoes.nome_colegiado ? viewingRepresentacoes : null}
+        representante={viewingRepresentacoes && viewingRepresentacoes.nome ? viewingRepresentacoes : null}
       />
 
       {/* Edit Representante Basico Modal */}

@@ -16,7 +16,7 @@ interface EditRepresentanteBasicoModalProps {
   isOpen: boolean;
   onClose: () => void;
   representante: {
-    id: string;
+    id: number;
     nome: string;
   } | null;
 }

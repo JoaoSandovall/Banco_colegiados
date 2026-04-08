@@ -1,41 +1,56 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List
-from datetime import date
+from enum import Enum
+
+class StatusVigencia(str, Enum):
+    ativo = "Ativo"
+    inativo = "Inativo"
+
+class TipoColegiado(str, Enum):
+    principal = "Principal"
+    subcolegiado = "Subcolegiado"
+
+class AmbitoColegiado(str, Enum):
+    interno = "Interno"
+    interministerial = "Interministerial"
+
+class AtuacaoMIDR(str, Enum):
+    preside = "Preside"
+    coordena = "Coordena"
+    participa = "Participa"
 
 class ColegiadoBase(BaseModel):
+    model_config = {"use_enum_values": True}
+
     nome_colegiado: str
-    status_vigencia: Optional[str] = None
-    objeto_finalidade: Optional[str] = None
-    principal_subcolegiado: Optional[str] = None
-    interno_interministerial: Optional[str] = None
-    temas: Optional[str] = None
+    status_vigencia: StatusVigencia
+    objeto_finalidade: str
+    principal_subcolegiado: TipoColegiado
+    interno_interministerial: AmbitoColegiado
+    temas: str
     link_normativo: Optional[str] = None
-    coordenacao: Optional[str] = None
-    atuacao_midr: Optional[str] = None
+    coordenacao: str
+    atuacao_midr: AtuacaoMIDR 
     numero_processo: Optional[str] = None
     subcolegiado_ligado_ao: Optional[str] = None
+    
+    @model_validator(mode='after')
+    def check_hierarquia_principal(self):
+        tem_ligacao = self.subcolegiado_ligado_ao and self.subcolegiado_ligado_ao.strip() != ""
+        
+        if self.principal_subcolegiado == "Principal" and tem_ligacao:
+            raise ValueError('Um colegiado principal não pode estar ligado a outro.')
+        return self
 
-class ColegiadoCreate(ColegiadoBase):
-    pass
-
-class Colegiado(ColegiadoBase):
-    id: int
-
-    class Config:
-        from_attributes = True
+    @field_validator('nome_colegiado', 'objeto_finalidade', 'temas', 'coordenacao')
+    @classmethod
+    def name_must_not_be_empty(cls, v: str) -> str:
+        if not v or v.strip() == "":
+            raise ValueError('Este campo não pode ser vazio')
+        return v
 
 class RepresentanteBase(BaseModel):
-    nome_colegiado_txt: Optional[str] = None
-    representante_nome: str
-    tipo_representacao: Optional[str] = None
-    cargo_representante: Optional[str] = None
-    secretaria_representante: Optional[str] = None
-    sigla_secretaria: Optional[str] = None
-    ato_indicacao: Optional[str] = None
-    link_portaria: Optional[str] = None
-    data_ato_indicacao: Optional[date] = None
-    numero_processo_rep: Optional[str] = None
-    colegiado_id: Optional[int] = None
+    nome: str
 
 class RepresentanteCreate(RepresentanteBase):
     pass

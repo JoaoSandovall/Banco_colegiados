@@ -15,6 +15,16 @@ const api = {
     });
     if (!response.ok) throw new Error("Erro ao salvar no banco");
     return response.json();
+  },
+
+  updateColegiado: async (id: number, data: any) => {
+    const response = await fetch(`${API_URL}/colegiados/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Erro ao atualizar no banco");
+    return response.json();
   }
 };
 

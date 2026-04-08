@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
-
+from database import get_db
 import models, schemas, database
 
 app = FastAPI(title="Sistema de Gestão de Colegiados - MIDR")
@@ -17,14 +17,31 @@ app.add_middleware(
 
 models.Base.metadata.create_all(bind=database.engine)
 
-@app.get("/colegiados", response_model=List[schemas.Colegiado])
-def listar_colegiados(db: Session = Depends(database.get_db)):
-    return db.query(models.Colegiado).all()
+@app.get("/colegiados/")
+def listar_colegiados(db: Session = Depends(get_db)):
+    colegiados = db.query(models.Colegiado).all()
+    return colegiados
 
-@app.post("/colegiados", response_model=schemas.Colegiado)
-def criar_colegiado(colegiado: schemas.ColegiadoCreate, db: Session = Depends(database.get_db)):
+@app.post("/colegiados/")
+def create_colegiado(colegiado: schemas.ColegiadoBase, db: Session = Depends(get_db)):
+    
+    if colegiado.principal_subcolegiado == "Principal":
+        colegiado.subcolegiado_ligado_ao = None
+    
     db_colegiado = models.Colegiado(**colegiado.model_dump())
+    
     db.add(db_colegiado)
+    db.commit()
+    db.refresh(db_colegiado)
+    return db_colegiado
+
+@app.put("/colegiados/{colegiado_id}", response_model=schemas.ColegiadoBase)
+def atualizar_colegiado(colegiado_id: int, colegiado: schemas.ColegiadoBase, db: Session = Depends(database.get_db)):
+    db_colegiado = db.query(models.Colegiado).filter(models.Colegiado.id == colegiado_id).first()
+    if not db_colegiado:
+        raise HTTPException(status_code=404, detail="Colegiado not found")
+    for key, value in colegiado.model_dump().items():
+        setattr(db_colegiado, key, value)
     db.commit()
     db.refresh(db_colegiado)
     return db_colegiado

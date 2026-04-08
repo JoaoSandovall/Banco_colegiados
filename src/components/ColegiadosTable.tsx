@@ -5,9 +5,9 @@ import { Edit, Users, Heart } from 'lucide-react';
 import { TagsManager, TagItem } from './TagsManager';
 
 interface Colegiado {
-  id: string;
-  nome: string;
-  status: 'Ativo' | 'Inativo' | 'Em estruturação';
+  id: number;
+  nome_colegiado: string;
+  status_vigencia: 'Ativo' | 'Inativo' | 'Em estruturação';
   numeroRepresentantes: number;
   destacado?: boolean;
   tags?: TagItem[];
@@ -15,9 +15,9 @@ interface Colegiado {
 
 interface ColegiadosTableProps {
   colegiados: Colegiado[];
-  onEdit: (id: string) => void;
-  onViewRepresentantes: (id: string) => void;
-  onTagsChange: (id: string, tags: TagItem[]) => void;
+  onEdit: (id: number) => void;
+  onViewRepresentantes: (id: number) => void;
+  onTagsChange: (id: number, tags: TagItem[]) => void;
 }
 
 const TAG_COLORS = [
@@ -78,7 +78,7 @@ export function ColegiadosTable({ colegiados, onEdit, onViewRepresentantes, onTa
               >
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#1a1a1a]">{colegiado.nome}</span>
+                    <span className="text-[#1a1a1a]">{colegiado.nome_colegiado}</span>
                     {colegiado.destacado && (
                       <Heart size={16} className="text-[#dc2626] fill-[#dc2626] flex-shrink-0" />
                     )}
@@ -87,9 +87,9 @@ export function ColegiadosTable({ colegiados, onEdit, onViewRepresentantes, onTa
                 <TableCell className="py-4 px-4 md:px-6">
                   <Badge 
                     variant="outline" 
-                    className={`${getStatusColor(colegiado.status)} border font-normal px-3 py-1 whitespace-nowrap`}
+                    className={`${getStatusColor(colegiado.status_vigencia)} border font-normal px-3 py-1 whitespace-nowrap`}
                   >
-                    {colegiado.status}
+                    {colegiado.status_vigencia}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-4 px-4 md:px-6 text-right text-[#1a1a1a]">
