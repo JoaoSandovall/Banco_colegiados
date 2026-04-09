@@ -83,7 +83,6 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
 
     const nomeDigitado = formData.nome_colegiado.trim().toLowerCase();
     
-    // Tipamos o 'c' como any aqui para evitar aquele erro de "implicitly has an 'any' type"
     const nomeDuplicado = listaColegiados.some((c: any) => {
       const nomeExistente = c.nome_colegiado?.trim().toLowerCase() || "";
       return nomeExistente === nomeDigitado && c.id !== colegiado?.id;
@@ -126,7 +125,9 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
     }
   };
   
-  const opcoesLigacao = listaColegiados.filter((c: any) => c.nome_colegiado !== formData.nome_colegiado);
+  const opcoesLigacao = listaColegiados.filter(
+  (c) => c.nome_colegiado !== formData.nome_colegiado && c.principal_subcolegiado === "Principal"
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

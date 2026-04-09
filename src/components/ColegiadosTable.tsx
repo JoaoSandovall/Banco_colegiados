@@ -1,7 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Edit, Users, Heart } from 'lucide-react';
+// CORREÇÃO 1: Importações únicas e organizadas
+import { Edit, Users, Heart, Trash2 } from 'lucide-react'; 
 import { TagsManager, TagItem } from './TagsManager';
 
 interface Colegiado {
@@ -18,6 +19,8 @@ interface ColegiadosTableProps {
   onEdit: (id: number) => void;
   onViewRepresentantes: (id: number) => void;
   onTagsChange: (id: number, tags: TagItem[]) => void;
+  // CORREÇÃO 2: Adicionando onDelete às props
+  onDelete: (id: number) => void; 
 }
 
 const TAG_COLORS = [
@@ -31,7 +34,14 @@ const TAG_COLORS = [
   { value: 'gray', bg: 'bg-[#6b7280]' },
 ];
 
-export function ColegiadosTable({ colegiados, onEdit, onViewRepresentantes, onTagsChange }: ColegiadosTableProps) {
+export function ColegiadosTable({ 
+  colegiados, 
+  onEdit, 
+  onViewRepresentantes, 
+  onTagsChange,
+  onDelete // CORREÇÃO 3: Desestruturando onDelete aqui
+}: ColegiadosTableProps) {
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Ativo':
@@ -67,7 +77,8 @@ export function ColegiadosTable({ colegiados, onEdit, onViewRepresentantes, onTa
               <TableHead className="font-semibold text-[#003366] py-4 px-4 md:px-6 w-[200px]">
                 Etiquetas
               </TableHead>
-              <TableHead className="w-[300px]"></TableHead>
+              {/* Ajustei a largura para caber os 3 botões */}
+              <TableHead className="w-[400px]"></TableHead> 
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -142,7 +153,21 @@ export function ColegiadosTable({ colegiados, onEdit, onViewRepresentantes, onTa
                       className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6] hover:text-[#003366] whitespace-nowrap"
                     >
                       <Users size={14} className="mr-2" />
-                      Visualizar Representantes
+                      Representantes
+                    </Button>
+                    {/* Botão de Excluir integrado na mesma célula */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (window.confirm(`Deseja realmente excluir "${colegiado.nome_colegiado}"?`)) {
+                          onDelete(colegiado.id);
+                        }
+                      }}
+                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 whitespace-nowrap"
+                    >
+                      <Trash2 size={14} className="mr-2" />
+                      Excluir
                     </Button>
                   </div>
                 </TableCell>

@@ -143,7 +143,6 @@ export default function App() {
     );
   };
 
-  // Table action handlers
   const handleOpenNewColegiado = () => {
     setEditingColegiado(null);
     setIsEditModalOpen(true);
@@ -154,6 +153,17 @@ export default function App() {
     if (colegiado) {
       setEditingColegiado({ id: colegiado.id, nome_colegiado: colegiado.nome_colegiado });
       setIsEditModalOpen(true);
+    }
+  };
+
+  const handleDeleteColegiado = async (id: number) => {
+    try {
+      await api.deleteColegiado(id);
+      setColegiados(prev => prev.filter(c => c.id !== id));
+      alert("Colegiado excluído com sucesso!");
+    } catch (error) {
+      console.error("Erro ao excluir colegiado:", error);
+      alert("Ocorreu um erro ao excluir o colegiado.");
     }
   };
 
@@ -178,7 +188,6 @@ export default function App() {
     }
   };
 
-  // Get page title based on active menu item
   const getPageTitle = () => {
     switch (activeMenuItem) {
       case 'colegiados':
@@ -199,10 +208,12 @@ export default function App() {
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         onSave={() => {
-          // Recarrega os dados do Python após salvar
+        
           api.getColegiados().then(data => setColegiados(data));
+          setIsEditModalOpen(false);
         }} 
         colegiado={editingColegiado}
+        listaColegiados={colegiados}
       />
 
       <ViewRepresentacoesModal
@@ -290,6 +301,7 @@ export default function App() {
                   onEdit={handleEditColegiado}
                   onViewRepresentantes={handleViewRepresentantes}
                   onTagsChange={handleColegiadoTagsChange}
+                  onDelete={handleDeleteColegiado}
                 />
               </div>
             </>
