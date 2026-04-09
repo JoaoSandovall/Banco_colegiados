@@ -31,6 +31,7 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
   };
 
   const [formData, setFormData] = useState(defaultFormData);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (colegiado) {
@@ -57,10 +58,10 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
   };
 
   const handleSelectChange = (name: string, value: string) => {
-  console.log(`Alterando ${name} para:`, value);
-  setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
+  // Validação atualizada e robusta
   const validate = () => {
     const requiredFields = [
       "nome_colegiado",
@@ -75,43 +76,57 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
 
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]?.trim()) {
-        alert(`O campo ${field.replace("_", " ")} é obrigatório.`);
+        alert(`O campo ${field.replace(/_/g, " ")} é obrigatório.`);
         return false;
       }
     }
 
-    const nomeDuplicado = listaColegiados.some(
-      (c) => c.nome_colegiado.toLowerCase() === formData.nome_colegiado.toLowerCase() && c.id !== colegiado?.id
-    );
+    const nomeDigitado = formData.nome_colegiado.trim().toLowerCase();
+    
+    // Tipamos o 'c' como any aqui para evitar aquele erro de "implicitly has an 'any' type"
+    const nomeDuplicado = listaColegiados.some((c: any) => {
+      const nomeExistente = c.nome_colegiado?.trim().toLowerCase() || "";
+      return nomeExistente === nomeDigitado && c.id !== colegiado?.id;
+    });
 
     if (nomeDuplicado) {
-      alert("Já existe um colegiado com este nome.");
-      return false;
+      alert("Operação bloqueada: Já existe um colegiado com este nome!");
+      return false; 
     }
 
     return true;
   };
 
+  // Submit atualizado
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      return; 
+    }
 
     try {
+      setIsLoading(true);
+
       if (colegiado) {
+        // Atualizar colegiado existente
         await api.updateColegiado(colegiado.id, formData);
-        alert("Colegiado atualizado com sucesso!");
       } else {
+        // Criar novo colegiado
         await api.createColegiado(formData);
-        alert("Colegiado criado com sucesso!");
       }
-      onSave();
+      
+      alert("Colegiado salvo com sucesso!");
+      onSave(); 
       onClose();
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao salvar dados.");
+
+    } catch (error: any) {
+      console.error("Erro no envio:", error);
+      alert(error.message || "Erro ao salvar colegiado"); 
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const opcoesLigacao = listaColegiados.filter((c) => c.nome_colegiado !== formData.nome_colegiado);
+  
+  const opcoesLigacao = listaColegiados.filter((c: any) => c.nome_colegiado !== formData.nome_colegiado);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -150,7 +165,6 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
             </div>
           </div>
 
-          {/* Segunda linha: Nº do Processo (linha inteira, fora do grid-cols-2) */}
           <div className="grid gap-2">
             <Label>Nº do Processo</Label>
             <Input name="numero_processo" value={formData.numero_processo} onChange={handleChange} />
@@ -167,18 +181,10 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
               <Select 
                 value={formData.principal_subcolegiado} 
                 onValueChange={(v: string) => {
-                  // Atualiza os dois valores SIMULTANEAMENTE para o React não se perder
                   if (v === "Principal") {
-                    setFormData(prev => ({
-                      ...prev,
-                      principal_subcolegiado: v,
-                      subcolegiado_ligado_ao: " "
-                    }));
+                    setFormData(prev => ({ ...prev, principal_subcolegiado: v, subcolegiado_ligado_ao: " " }));
                   } else {
-                    setFormData(prev => ({
-                      ...prev,
-                      principal_subcolegiado: v
-                    }));
+                    setFormData(prev => ({ ...prev, principal_subcolegiado: v }));
                   }
                 }}
               >
@@ -204,7 +210,7 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value=" ">Nenhum</SelectItem>
-                    {opcoesLigacao.map((c) => (
+                    {opcoesLigacao.map((c: any) => (
                       <SelectItem key={c.id} value={c.nome_colegiado}>
                         {c.nome_colegiado}
                       </SelectItem>
@@ -232,7 +238,6 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
                 </SelectContent>
               </Select>
             </div>
-            
           </div>
 
           <div className="grid gap-2">
@@ -252,8 +257,10 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit}>Salvar no Banco</Button>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Salvando..." : "Salvar no Banco"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

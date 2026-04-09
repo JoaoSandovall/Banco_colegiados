@@ -13,7 +13,12 @@ const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Erro ao salvar no banco");
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Erro ao salvar no banco");
+    }
+    
     return response.json();
   },
 
@@ -23,9 +28,21 @@ const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Erro ao atualizar no banco");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Erro ao atualizar no banco");
+    }
+    return response.json();
+  },
+  
+  deleteColegiado: async (id: number) => {
+    const response = await fetch(`${API_URL}/colegiados/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) throw new Error("Erro ao excluir o colegiado");
     return response.json();
   }
+
 };
 
 export default api;
