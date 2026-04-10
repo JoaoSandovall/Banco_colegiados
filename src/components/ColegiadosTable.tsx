@@ -155,7 +155,7 @@ export function ColegiadosTable({
                       <Users size={14} className="mr-2" />
                       Representantes
                     </Button>
-                    {/* Botão de Excluir integrado na mesma célula */}
+            
                     <Button
                       variant="outline"
                       size="sm"
