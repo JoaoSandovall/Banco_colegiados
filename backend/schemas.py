@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator, model_validator
-from typing import Optional, List
+from typing import Optional, List,  Dict, Any
 from enum import Enum
 
 class StatusVigencia(str, Enum):
@@ -33,6 +33,7 @@ class ColegiadoBase(BaseModel):
     atuacao_midr: AtuacaoMIDR 
     numero_processo: Optional[str] = None
     subcolegiado_ligado_ao: Optional[str] = None
+    tags: Optional[List[Dict[str, Any]]] = []
     
     @model_validator(mode='after')
     def check_hierarquia_principal(self):

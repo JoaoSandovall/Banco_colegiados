@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -17,6 +17,8 @@ class Colegiado(Base):
     atuacao_midr = Column(String)
     numero_processo = Column(String)
     subcolegiado_ligado_ao = Column(String, nullable=True)
+    tags = Column(JSON, default=list)
+    
     representantes = relationship("Representante", back_populates="colegiado_rel")
 
 class Representante(Base):

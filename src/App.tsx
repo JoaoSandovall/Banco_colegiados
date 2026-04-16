@@ -51,21 +51,23 @@ export default function App() {
 
   const [colegiados, setColegiados] = useState<any[]>([]);
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const data = await api.getColegiados();
-      const mappedData = data.map((col: any) => ({
-        ...col,
-        numeroRepresentantes: 0, // TODO: calculate from representatives
-        tags: [], // TODO: add tags logic
-      }));
-      setColegiados(mappedData);
-    } catch (error) {
-      console.error("Erro ao carregar banco de dados:", error);
-    }
-  };
-  fetchData();
-}, []);
+    const fetchData = async () => {
+      try {
+        const data = await api.getColegiados();
+        console.log("DADOS DO BANCO NO F5:", data);
+
+        const mappedData = data.map((col: any) => ({
+          ...col,
+          numeroRepresentantes: 0,
+          tags: col.tags ? col.tags : [], 
+        }));
+        setColegiados(mappedData);
+      } catch (error) {
+        console.error("Erro ao carregar banco de dados:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Mock data for Representantes page based on the screenshot with colored tags
   const [representantes, setRepresentantes] = useState<any[]>([]);
@@ -100,13 +102,25 @@ export default function App() {
     setColegiadosTags(colegiadosTags.filter(t => t !== tag));
   };
 
-  const handleColegiadoTagsChange = (id: number, tags: TagItem[]) => {
-    setColegiados(prev => 
-      prev.map(col => col.id === id ? { ...col, tags } : col)
-    );
+  const handleColegiadoTagsChange = async (id: number, tags: TagItem[]) => {
+    const colegiadoAtual = colegiados.find(c => c.id === id);
+    if (!colegiadoAtual) return;
+
+    const { numeroRepresentantes, ...dadosLimpos } = colegiadoAtual;
+    
+    const colegiadoAtualizado = { ...dadosLimpos, tags: tags };
+
+    setColegiados(prev => prev.map(col => col.id === id ? { ...col, tags } : col));
+
+    try {
+      console.log("ENVIANDO PARA O BANCO:", colegiadoAtualizado);
+      await api.updateColegiado(id, { ...colegiadoAtual, tags: tags });
+    } catch (error) {
+      console.error("Erro no PUT das etiquetas:", error);
+      alert("A etiqueta não foi salva no banco! Abra o F12 para ver o erro.");
+    }
   };
 
-  // Representantes filter handlers
   const handleRepresentantesFilterChange = (key: string, value: string | string[]) => {
     setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
   };
