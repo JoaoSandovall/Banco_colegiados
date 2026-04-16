@@ -6,6 +6,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import api from "../service/api";
+import { Edit } from "lucide-react";
 
 interface EditColegiadoModalProps {
   isOpen: boolean;
@@ -32,24 +33,30 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
 
   const [formData, setFormData] = useState(defaultFormData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); 
 
   useEffect(() => {
-    if (colegiado) {
-      setFormData({
-        nome_colegiado: colegiado.nome_colegiado || "",
-        status_vigencia: colegiado.status_vigencia || "",
-        objeto_finalidade: colegiado.objeto_finalidade || "",
-        principal_subcolegiado: colegiado.principal_subcolegiado || "",
-        interno_interministerial: colegiado.interno_interministerial || "",
-        temas: colegiado.temas || "",
-        link_normativo: colegiado.link_normativo || "",
-        coordenacao: colegiado.coordenacao || "",
-        atuacao_midr: colegiado.atuacao_midr || "",
-        numero_processo: colegiado.numero_processo || "",
-        subcolegiado_ligado_ao: colegiado.subcolegiado_ligado_ao || ""
-      });
-    } else {
-      setFormData(defaultFormData);
+    if (isOpen) {
+
+      setIsEditing(!colegiado); 
+      
+      if (colegiado) {
+        setFormData({
+          nome_colegiado: colegiado.nome_colegiado || "",
+          status_vigencia: colegiado.status_vigencia || "",
+          objeto_finalidade: colegiado.objeto_finalidade || "",
+          principal_subcolegiado: colegiado.principal_subcolegiado || "",
+          interno_interministerial: colegiado.interno_interministerial || "",
+          temas: colegiado.temas || "",
+          link_normativo: colegiado.link_normativo || "",
+          coordenacao: colegiado.coordenacao || "",
+          atuacao_midr: colegiado.atuacao_midr || "",
+          numero_processo: colegiado.numero_processo || "",
+          subcolegiado_ligado_ao: colegiado.subcolegiado_ligado_ao || ""
+        });
+      } else {
+        setFormData(defaultFormData);
+      }
     }
   }, [colegiado, isOpen]);
 
@@ -61,7 +68,6 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
     setFormData({ ...formData, [name]: value });
   };
 
-  // Validação atualizada e robusta
   const validate = () => {
     const requiredFields = [
       "nome_colegiado",
@@ -96,7 +102,6 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
     return true;
   };
 
-  // Submit atualizado
   const handleSubmit = async () => {
     if (!validate()) {
       return; 
@@ -106,10 +111,8 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
       setIsLoading(true);
 
       if (colegiado) {
-        // Atualizar colegiado existente
         await api.updateColegiado(colegiado.id, formData);
       } else {
-        // Criar novo colegiado
         await api.createColegiado(formData);
       }
       
@@ -126,142 +129,222 @@ export function EditColegiadoModal({ isOpen, onClose, onSave, colegiado, listaCo
   };
   
   const opcoesLigacao = listaColegiados.filter(
-  (c) => c.nome_colegiado !== formData.nome_colegiado && c.principal_subcolegiado === "Principal"
+    (c) => c.nome_colegiado !== formData.nome_colegiado && c.principal_subcolegiado === "Principal"
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{colegiado ? "Editar Colegiado" : "Novo Colegiado"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? (colegiado ? "Editar Colegiado" : "Novo Colegiado") : "Informações do Colegiado"}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="nome_colegiado">Nome do Colegiado *</Label>
-            <Input id="nome_colegiado" name="nome_colegiado" value={formData.nome_colegiado} onChange={handleChange} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label>Status (Vigência) *</Label>
-              <Select value={formData.status_vigencia} onValueChange={(v: string) => handleSelectChange("status_vigencia", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Âmbito (Interno/Interministerial) *</Label>
-              <Select value={formData.interno_interministerial} onValueChange={(v: string) => handleSelectChange("interno_interministerial", v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Interno">Interno</SelectItem>
-                  <SelectItem value="Interministerial">Interministerial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Nº do Processo</Label>
-            <Input name="numero_processo" value={formData.numero_processo} onChange={handleChange} />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Objeto (Finalidade) *</Label>
-            <Textarea name="objeto_finalidade" value={formData.objeto_finalidade} onChange={handleChange} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label>Tipo de Colegiado *</Label>
-              <Select 
-                value={formData.principal_subcolegiado} 
-                onValueChange={(v: string) => {
-                  if (v === "Principal") {
-                    setFormData(prev => ({ ...prev, principal_subcolegiado: v, subcolegiado_ligado_ao: " " }));
-                  } else {
-                    setFormData(prev => ({ ...prev, principal_subcolegiado: v }));
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Principal">Principal</SelectItem>
-                  <SelectItem value="Subcolegiado">Subcolegiado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formData.principal_subcolegiado !== "Principal" && (
+        <div className="py-4">
+          {isEditing ? (
+            /* --- MODO EDIÇÃO --- */
+            <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label>Subcolegiado ligado ao</Label>
-                <Select 
-                  value={formData.subcolegiado_ligado_ao} 
-                  onValueChange={(v: string) => handleSelectChange("subcolegiado_ligado_ao", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Nenhum" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value=" ">Nenhum</SelectItem>
-                    {opcoesLigacao.map((c: any) => (
-                      <SelectItem key={c.id} value={c.nome_colegiado}>
-                        {c.nome_colegiado}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="nome_colegiado">Nome do Colegiado *</Label>
+                <Input id="nome_colegiado" name="nome_colegiado" value={formData.nome_colegiado} onChange={handleChange} />
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label>Atuação MIDR *</Label>
-              <Select 
-                value={formData.atuacao_midr} 
-                onValueChange={(v: string) => handleSelectChange("atuacao_midr", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Preside">Preside</SelectItem>
-                  <SelectItem value="Coordena">Coordena</SelectItem>
-                  <SelectItem value="Participa">Participa</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Status (Vigência) *</Label>
+                  <Select value={formData.status_vigencia} onValueChange={(v: string) => handleSelectChange("status_vigencia", v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Âmbito (Interno/Interministerial) *</Label>
+                  <Select value={formData.interno_interministerial} onValueChange={(v: string) => handleSelectChange("interno_interministerial", v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Interno">Interno</SelectItem>
+                      <SelectItem value="Interministerial">Interministerial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Nº do Processo</Label>
+                <Input name="numero_processo" value={formData.numero_processo} onChange={handleChange} />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Objeto (Finalidade) *</Label>
+                <Textarea name="objeto_finalidade" value={formData.objeto_finalidade} onChange={handleChange} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Tipo de Colegiado *</Label>
+                  <Select 
+                    value={formData.principal_subcolegiado} 
+                    onValueChange={(v: string) => {
+                      if (v === "Principal") {
+                        setFormData(prev => ({ ...prev, principal_subcolegiado: v, subcolegiado_ligado_ao: "" }));
+                      } else {
+                        setFormData(prev => ({ ...prev, principal_subcolegiado: v }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Principal">Principal</SelectItem>
+                      <SelectItem value="Subcolegiado">Subcolegiado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.principal_subcolegiado !== "Principal" && (
+                  <div className="grid gap-2">
+                    <Label>Subcolegiado ligado ao</Label>
+                    <Select value={formData.subcolegiado_ligado_ao} onValueChange={(v: string) => handleSelectChange("subcolegiado_ligado_ao", v)}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=" ">Nenhum</SelectItem>
+                        {opcoesLigacao.map((c) => (
+                          <SelectItem key={c.id} value={c.nome_colegiado}>
+                            {c.nome_colegiado}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Atuação MIDR *</Label>
+                  <Select value={formData.atuacao_midr} onValueChange={(v: string) => handleSelectChange("atuacao_midr", v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Preside">Preside</SelectItem>
+                      <SelectItem value="Coordena">Coordena</SelectItem>
+                      <SelectItem value="Participa">Participa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Temas *</Label>
+                <Input name="temas" value={formData.temas} onChange={handleChange} />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Coordenação *</Label>
+                <Input name="coordenacao" value={formData.coordenacao} onChange={handleChange} />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Link do Normativo</Label>
+                <Input name="link_normativo" value={formData.link_normativo} onChange={handleChange} />
+              </div>
             </div>
-          </div>
+          ) : (
+            /* --- MODO VISUALIZAÇÃO --- */
+            <div className="grid gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Nome do Colegiado</Label>
+                  <p className="text-sm font-semibold text-[#003366]">{formData.nome_colegiado || "Não informado"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Status</Label>
+                  <p className="text-sm font-semibold">{formData.status_vigencia || "Não informado"}</p>
+                </div>
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Temas *</Label>
-            <Input name="temas" value={formData.temas} onChange={handleChange} />
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Âmbito</Label>
+                  <p className="text-sm font-semibold">{formData.interno_interministerial || "Não informado"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Nº do Processo</Label>
+                  <p className="text-sm font-semibold">{formData.numero_processo || "---"}</p>
+                </div>
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Coordenação *</Label>
-            <Input name="coordenacao" value={formData.coordenacao} onChange={handleChange} />
-          </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs uppercase tracking-wider">Objeto (Finalidade)</Label>
+                <div className="p-3 bg-gray-50 rounded-md border text-sm text-gray-700 leading-relaxed">
+                  {formData.objeto_finalidade || "Sem descrição disponível."}
+                </div>
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Link do Normativo</Label>
-            <Input name="link_normativo" value={formData.link_normativo} onChange={handleChange} />
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Tipo</Label>
+                  <p className="text-sm font-semibold">{formData.principal_subcolegiado || "Não informado"}</p>
+                </div>
+                {formData.principal_subcolegiado !== "Principal" && (
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-xs uppercase tracking-wider">Ligado ao Colegiado</Label>
+                    <p className="text-sm font-semibold">{formData.subcolegiado_ligado_ao || "Nenhum"}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Atuação MIDR</Label>
+                  <p className="text-sm font-semibold">{formData.atuacao_midr || "Não informado"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Coordenação</Label>
+                  <p className="text-sm font-semibold">{formData.coordenacao || "Não informado"}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Temas</Label>
+                  <p className="text-sm font-semibold">{formData.temas || "Não informado"}</p>
+              </div>
+
+              <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Link do Normativo</Label>
+                  <p className="text-sm font-semibold">{formData.link_normativo || "---"}</p>
+              </div>
+
+            </div>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Salvando..." : "Salvar no Banco"}
-          </Button>
+        <DialogFooter className="flex justify-between items-center">
+          {!isEditing ? (
+            <>
+              <Button variant="ghost" onClick={onClose}>Fechar</Button>
+              <Button onClick={() => setIsEditing(true)}>
+                <Edit size={16} className="mr-2" />
+                Editar Informações
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => colegiado ? setIsEditing(false) : onClose()}
+                disabled={isLoading}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmit} disabled={isLoading}>
+                {isLoading ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

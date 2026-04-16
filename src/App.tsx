@@ -18,16 +18,12 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
-  // Modal state for editing colegiado
-  const [editingColegiado, setEditingColegiado] = useState<{ id: number; nome_colegiado: string } | null>(null);
+  const [editingColegiado, setEditingColegiado] = useState<any | null>(null);
   
-  // Modal state for viewing representacoes
   const [viewingRepresentacoes, setViewingRepresentacoes] = useState<{ id: number; nome?: string; nome_colegiado?: string } | null>(null);
-  
-  // Modal state for editing representante basico
+
   const [editingRepresentante, setEditingRepresentante] = useState<{ id: number; nome: string } | null>(null);
   
-  // Filters for Colegiados page
   const [colegiadosFilters, setColegiadosFilters] = useState({
     nomeColegiado: '',
     coordenacao: '',
@@ -150,8 +146,8 @@ export default function App() {
 
   const handleEditColegiado = (id: number) => {
     const colegiado = colegiados.find(c => c.id === id);
-    if (colegiado) {
-      setEditingColegiado({ id: colegiado.id, nome_colegiado: colegiado.nome_colegiado });
+    if (colegiado) {    
+      setEditingColegiado(colegiado);
       setIsEditModalOpen(true);
     }
   };

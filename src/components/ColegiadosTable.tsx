@@ -137,6 +137,7 @@ export function ColegiadosTable({
                 </TableCell>
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2 justify-end">
+                   
                     <Button
                       variant="outline"
                       size="sm"
@@ -144,8 +145,9 @@ export function ColegiadosTable({
                       className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6] hover:text-[#003366] whitespace-nowrap"
                     >
                       <Edit size={14} className="mr-2" />
-                      Editar
+                      Detalhes
                     </Button>
+
                     <Button
                       variant="outline"
                       size="sm"
