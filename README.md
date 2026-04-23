@@ -92,5 +92,3 @@ Acesse a aplicação em: `http://localhost:5173`
 * **CRUD Completo**: Criação, edição e exclusão de colegiados com validação de campos.
 * **Responsividade**: Interface adaptada para diferentes resoluções de tela.
 * **Gestão de Representantes**: Visualização e controle dos membros vinculados a cada instância.
-
-Este arquivo reflete exatamente o que está nos seus arquivos `main.py`, `models.py` e nos c
