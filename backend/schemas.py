@@ -61,3 +61,9 @@ class Representante(RepresentanteBase):
 
     class Config:
         from_attributes = True
+
+class Colegiado(ColegiadoBase):
+    id: int
+
+    class Config:
+        from_attributes = True

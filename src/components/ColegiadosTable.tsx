@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-// CORREÇÃO 1: Importações únicas e organizadas
 import { Edit, Users, Heart, Trash2 } from 'lucide-react'; 
 import { TagsManager, TagItem } from './TagsManager';
+import { FilterSection } from './FilterSection';
+import { fetchColegiados} from '../service/api';
 
 interface Colegiado {
   id: number;
@@ -19,7 +21,6 @@ interface ColegiadosTableProps {
   onEdit: (id: number) => void;
   onViewRepresentantes: (id: number) => void;
   onTagsChange: (id: number, tags: TagItem[]) => void;
-  // CORREÇÃO 2: Adicionando onDelete às props
   onDelete: (id: number) => void; 
 }
 
@@ -34,12 +35,92 @@ const TAG_COLORS = [
   { value: 'gray', bg: 'bg-[#6b7280]' },
 ];
 
+export const ColegiadosManager = () => {
+  const [colegiados, setColegiados] = useState<Colegiado[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [filters, setFilters] = useState({
+    nomeColegiado: '',
+    coordenacao: '',
+    temas: '',
+    status: 'todos',
+    principalSub: 'todos',
+    atuacaoMIDR: 'todos',
+    internoMinisterial: 'todos',
+    filtroEtiquetas: ''
+  });
+
+  const loadData = async () => {
+    try {
+      const data = await fetchColegiados(filters as any);
+      setColegiados(data);
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [filters]);
+
+  const handleFilterChange = (key: string, value: string | string[]) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [key]: value
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      nomeColegiado: '',
+      coordenacao: '',
+      temas: '',
+      status: 'todos',
+      principalSub: 'todos',
+      atuacaoMIDR: 'todos',
+      internoMinisterial: 'todos',
+      filtroEtiquetas: ''
+    });
+    setTags([]);
+  };
+
+  const handleApplyFilters = () => loadData();
+  
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleEdit = (id: number) => console.log("Edit", id);
+  const handleViewRepresentantes = (id: number) => console.log("View", id);
+  const handleTagsChange = (id: number, newTags: TagItem[]) => console.log("Tags", id, newTags);
+  const handleDelete = (id: number) => console.log("Delete", id);
+
+  return (
+    <div className="space-y-6">
+      <FilterSection 
+        filters={filters as any}
+        onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+        onApplyFilters={handleApplyFilters}
+        tags={tags}
+        onRemoveTag={handleRemoveTag}
+      />
+      <ColegiadosTable 
+        colegiados={colegiados}
+        onEdit={handleEdit}
+        onViewRepresentantes={handleViewRepresentantes}
+        onTagsChange={handleTagsChange}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
+};
+
 export function ColegiadosTable({ 
   colegiados, 
-  onEdit, 
-  onViewRepresentantes, 
-  onTagsChange,
-  onDelete // CORREÇÃO 3: Desestruturando onDelete aqui
+  onEdit,
+  onViewRepresentantes,
+  onTagsChange, 
+  onDelete 
 }: ColegiadosTableProps) {
   
   const getStatusColor = (status: string) => {
@@ -77,7 +158,6 @@ export function ColegiadosTable({
               <TableHead className="font-semibold text-[#003366] py-4 px-4 md:px-6 w-[200px]">
                 Etiquetas
               </TableHead>
-              {/* Ajustei a largura para caber os 3 botões */}
               <TableHead className="w-[400px]"></TableHead> 
             </TableRow>
           </TableHeader>
@@ -137,7 +217,6 @@ export function ColegiadosTable({
                 </TableCell>
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2 justify-end">
-                   
                     <Button
                       variant="outline"
                       size="sm"
@@ -147,7 +226,6 @@ export function ColegiadosTable({
                       <Edit size={14} className="mr-2" />
                       Detalhes
                     </Button>
-
                     <Button
                       variant="outline"
                       size="sm"
@@ -157,7 +235,6 @@ export function ColegiadosTable({
                       <Users size={14} className="mr-2" />
                       Representantes
                     </Button>
-            
                     <Button
                       variant="outline"
                       size="sm"

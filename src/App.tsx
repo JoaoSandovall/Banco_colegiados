@@ -36,7 +36,6 @@ export default function App() {
   });
   const [colegiadosTags, setColegiadosTags] = useState<string[]>([]);
   
-  // Filters for Representantes page
   const [representantesFilters, setRepresentantesFilters] = useState({
     nomeRepresentante: '',
     nomeColegiado: '',
@@ -50,30 +49,32 @@ export default function App() {
   const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
 
   const [colegiados, setColegiados] = useState<any[]>([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await api.getColegiados();
-        console.log("DADOS DO BANCO NO F5:", data);
+  const fetchDadosColegiados = async (filtros = {}) => {
+    try {
+      const data = await api.getColegiados(filtros);
+      console.log("DADOS RETORNADOS:", data);
 
-        const mappedData = data.map((col: any) => ({
-          ...col,
-          numeroRepresentantes: 0,
-          tags: col.tags ? col.tags : [], 
-        }));
-        setColegiados(mappedData);
-      } catch (error) {
-        console.error("Erro ao carregar banco de dados:", error);
-      }
-    };
-    fetchData();
+      const mappedData = data.map((col: any) => ({
+        ...col,
+        numeroRepresentantes: 0,
+        tags: col.tags ? col.tags : [], 
+      }));
+      setColegiados(mappedData);
+    } catch (error) {
+      console.error("Erro ao carregar banco de dados:", error);
+    }
+  };
+
+  // Carregamento inicial (sem filtros)
+  useEffect(() => {
+    fetchDadosColegiados();
   }, []);
 
   // Mock data for Representantes page based on the screenshot with colored tags
   const [representantes, setRepresentantes] = useState<any[]>([]);
 
-  const totalColegiados = 183;
-  const totalRepresentantes = 502;
+  const totalColegiados = colegiados.length
+  const totalRepresentantes = colegiados.reduce((acc, col) => acc + (col.numeroRepresentantes || 0), 0);
 
   // Colegiados filter handlers
   const handleColegiadosFilterChange = (key: string, value: string | string[]) => {
@@ -81,7 +82,7 @@ export default function App() {
   };
 
   const handleColegiadosClearFilters = () => {
-    setColegiadosFilters({
+    const filtrosVazios = {
       nomeColegiado: '',
       coordenacao: '',
       temas: '',
@@ -90,14 +91,20 @@ export default function App() {
       atuacaoMIDR: 'todos',
       internoMinisterial: 'todos',
       filtroEtiquetas: '',
-    });
+    };
+    
+    setColegiadosFilters(filtrosVazios);
     setColegiadosTags([]);
+    
+    // Dispara a requisição recarregando a tabela sem filtros
+    fetchDadosColegiados(filtrosVazios);
   };
 
   const handleColegiadosApplyFilters = () => {
-    console.log('Applying colegiados filters:', colegiadosFilters);
+    // Dispara a requisição passando o estado atual dos filtros
+    fetchDadosColegiados(colegiadosFilters);
   };
-
+ 
   const handleColegiadosRemoveTag = (tag: string) => {
     setColegiadosTags(colegiadosTags.filter(t => t !== tag));
   };
@@ -240,7 +247,6 @@ export default function App() {
         representante={editingRepresentante}
       />
 
-      {/* Sidebar */}
       <Sidebar 
         activeItem={activeMenuItem} 
         onItemClick={(item) => {
@@ -251,9 +257,7 @@ export default function App() {
         onCloseMobileMenu={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="bg-[#003366] text-white py-4 px-4 md:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -272,11 +276,9 @@ export default function App() {
           </div>
         </header>
 
-        {/* Content Area */}
         <div className="flex-1 p-4 md:p-8">
           {activeMenuItem === 'colegiados' && (
             <>
-              {/* Filters */}
               <div className="mb-6">
                 <FilterSection
                   filters={colegiadosFilters}
@@ -288,7 +290,6 @@ export default function App() {
                 />
               </div>
 
-              {/* Summary */}
               <SummaryBar 
                 page="colegiados"
                 totalColegiados={totalColegiados}

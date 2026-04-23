@@ -1,14 +1,38 @@
 const API_URL = "http://127.0.0.1:8000";
 
+export interface ColegiadoFilters {
+  nomeColegiado?: string;
+  coordenacao?: string;
+  temas?: string;
+  status?: string;
+  principalSub?: string;
+  atuacaoMIDR?: string;
+  internoMinisterial?: string;
+  filtroEtiquetas?: string;
+}
+
+export const fetchColegiados = async (filters: any = {}) => {
+  const params = new URLSearchParams();
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && value !== 'todos' && value !== '') {
+      params.append(key, String(value));
+    }
+  });
+
+  const queryString = params.toString();
+  const url = queryString ? `${API_URL}/colegiados/?${queryString}` : `${API_URL}/colegiados/`;
+  
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Erro ao buscar dados do servidor com filtros");
+  return response.json();
+};
+
 const api = {
-  getColegiados: async () => {
-    const response = await fetch(`${API_URL}/colegiados`);
-    if (!response.ok) throw new Error("Erro ao buscar dados do servidor");
-    return response.json();
-  },
+  getColegiados: fetchColegiados,
 
   createColegiado: async (data: any) => {
-    const response = await fetch(`${API_URL}/colegiados`, {
+    const response = await fetch(`${API_URL}/colegiados/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -42,7 +66,6 @@ const api = {
     if (!response.ok) throw new Error("Erro ao excluir o colegiado");
     return response.json();
   }
-
 };
 
 export default api;

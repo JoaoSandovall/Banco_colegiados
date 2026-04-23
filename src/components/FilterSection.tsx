@@ -36,7 +36,6 @@ export function FilterSection({
       <h3 className="mb-6 text-[#1a1a1a]">Filtros</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-        {/* Nome do Colegiado */}
         <div className="space-y-2">
           <Label htmlFor="nome-colegiado" className="text-[#4b5563]">
             Nome do Colegiado
@@ -50,7 +49,6 @@ export function FilterSection({
           />
         </div>
 
-        {/* Coordenação do Colegiado */}
         <div className="space-y-2">
           <Label htmlFor="coordenacao" className="text-[#4b5563]">
             Coordenação do Colegiado
@@ -64,7 +62,6 @@ export function FilterSection({
           />
         </div>
 
-        {/* Temas */}
         <div className="space-y-2">
           <Label htmlFor="temas" className="text-[#4b5563]">
             Temas
@@ -78,12 +75,11 @@ export function FilterSection({
           />
         </div>
 
-        {/* Status (Vigência) */}
         <div className="space-y-2">
           <Label htmlFor="status" className="text-[#4b5563]">
             Status (Vigência)
           </Label>
-          <Select value={filters.status} onValueChange={(value) => onFilterChange('status', value)}>
+          <Select value={filters.status} onValueChange={(value: string) => onFilterChange('status', value)}>
             <SelectTrigger id="status" className="bg-white border-[#d1d5db] h-10">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -96,12 +92,11 @@ export function FilterSection({
           </Select>
         </div>
 
-        {/* Principal/Subcol */}
         <div className="space-y-2">
           <Label htmlFor="principal-sub" className="text-[#4b5563]">
             Principal/Subcol
           </Label>
-          <Select value={filters.principalSub} onValueChange={(value) => onFilterChange('principalSub', value)}>
+          <Select value={filters.principalSub} onValueChange={(value: string) => onFilterChange('principalSub', value)}>
             <SelectTrigger id="principal-sub" className="bg-white border-[#d1d5db] h-10">
               <SelectValue placeholder="Principal" />
             </SelectTrigger>
@@ -113,12 +108,11 @@ export function FilterSection({
           </Select>
         </div>
 
-        {/* Atuação do MIDR */}
         <div className="space-y-2">
           <Label htmlFor="atuacao-midr" className="text-[#4b5563]">
             Atuação do MIDR
           </Label>
-          <Select value={filters.atuacaoMIDR} onValueChange={(value) => onFilterChange('atuacaoMIDR', value)}>
+          <Select value={filters.atuacaoMIDR} onValueChange={(value: string) => onFilterChange('atuacaoMIDR', value)}>
             <SelectTrigger id="atuacao-midr" className="bg-white border-[#d1d5db] h-10">
               <SelectValue placeholder="Atuação" />
             </SelectTrigger>
@@ -126,17 +120,16 @@ export function FilterSection({
               <SelectItem value="todos">Todos</SelectItem>
               <SelectItem value="participante">Participante</SelectItem>
               <SelectItem value="coordenador">Coordenador</SelectItem>
-              <SelectItem value="observador">Observador</SelectItem>
+              <SelectItem value="participante">Participante</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Interno/ministerial */}
         <div className="space-y-2">
           <Label htmlFor="interno-ministerial" className="text-[#4b5563]">
             Interno/ministerial
           </Label>
-          <Select value={filters.internoMinisterial} onValueChange={(value) => onFilterChange('internoMinisterial', value)}>
+          <Select value={filters.internoMinisterial} onValueChange={(value: string) => onFilterChange('internoMinisterial', value)}>
             <SelectTrigger id="interno-ministerial" className="bg-white border-[#d1d5db] h-10">
               <SelectValue placeholder="Interministerial" />
             </SelectTrigger>
@@ -148,7 +141,6 @@ export function FilterSection({
           </Select>
         </div>
 
-        {/* Filtrar por texto de etiquetas */}
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="filtro-etiquetas" className="text-[#4b5563]">
             Filtrar por Etiquetas (texto)
@@ -163,7 +155,6 @@ export function FilterSection({
         </div>
       </div>
 
-      {/* Etiquetas */}
       {tags.length > 0 && (
         <div className="mt-5">
           <Label className="text-[#4b5563] mb-2 block">Etiquetas:</Label>
@@ -187,7 +178,6 @@ export function FilterSection({
         </div>
       )}
 
-      {/* Filter Actions */}
       <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
         <Button 
           variant="outline" 

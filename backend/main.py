@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import func, cast, String
+from typing import List, Optional 
 from database import get_db
 import models, schemas, database
 
@@ -17,16 +18,64 @@ app.add_middleware(
 
 models.Base.metadata.create_all(bind=database.engine)
 
+@app.get("/colegiados", response_model=List[schemas.Colegiado])
+def get_colegiados(
+    ambito: Optional[str] = Query(None),
+    atuacao: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.Colegiado)
+    
+    if ambito:
+        query = query.filter(models.Colegiado.ambito == ambito)
+    if atuacao:
+        query = query.filter(models.Colegiado.atuacao == atuacao)
+    if status:
+        query = query.filter(models.Colegiado.status == status)
+        
+    return query.all()
+
 @app.get("/colegiados/")
-def listar_colegiados(db: Session = Depends(get_db)):
-    colegiados = db.query(models.Colegiado).all()
-    return colegiados
+def listar_colegiados(
+    nomeColegiado: Optional[str] = None,
+    coordenacao: Optional[str] = None,
+    temas: Optional[str] = None,
+    status: Optional[str] = None,
+    principalSub: Optional[str] = None,
+    atuacaoMIDR: Optional[str] = None,
+    internoMinisterial: Optional[str] = None,
+    filtroEtiquetas: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.Colegiado)
+
+    print(f"--- FILTRO DE ETIQUETA RECEBIDO: {filtroEtiquetas} ---")
+
+    if nomeColegiado:
+        query = query.filter(models.Colegiado.nome_colegiado.ilike(f"%{nomeColegiado}%"))
+    if coordenacao:
+        query = query.filter(models.Colegiado.coordenacao.ilike(f"%{coordenacao}%"))
+    if temas:
+        query = query.filter(models.Colegiado.temas.ilike(f"%{temas}%"))
+    
+    if status and status != "todos":
+        query = query.filter(func.lower(models.Colegiado.status_vigencia) == status.lower())
+    if principalSub and principalSub != "todos":
+        query = query.filter(func.lower(models.Colegiado.principal_subcolegiado) == principalSub.lower())
+    if atuacaoMIDR and atuacaoMIDR != "todos":
+        query = query.filter(func.lower(models.Colegiado.atuacao_midr) == atuacaoMIDR.lower())
+    if internoMinisterial and internoMinisterial != "todos":
+        query = query.filter(func.lower(models.Colegiado.interno_interministerial) == internoMinisterial.lower())        
+    if filtroEtiquetas:
+        query = query.filter(cast(models.Colegiado.tags, String).ilike(f"%{filtroEtiquetas}%"))
+
+    return query.all()
 
 @app.post("/colegiados/")
 def create_colegiado(colegiado: schemas.ColegiadoBase, db: Session = Depends(get_db)):
     from sqlalchemy import func
     
-    # Verifica se já existe um colegiado com o mesmo nome (case-insensitive)
     db_existente = db.query(models.Colegiado).filter(
         func.lower(models.Colegiado.nome_colegiado) == func.lower(colegiado.nome_colegiado)
     ).first()
@@ -52,7 +101,6 @@ def atualizar_colegiado(colegiado_id: int, colegiado: schemas.ColegiadoBase, db:
     if not db_colegiado:
         raise HTTPException(status_code=404, detail="Colegiado not found")
     
-    # Verifica se já existe outro colegiado com o mesmo nome (case-insensitive)
     if colegiado.nome_colegiado.strip().lower() != db_colegiado.nome_colegiado.strip().lower():
         db_existente = db.query(models.Colegiado).filter(
             func.lower(models.Colegiado.nome_colegiado) == func.lower(colegiado.nome_colegiado)
