@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Toaster, toast } from 'sonner';
 import api from './service/api';
 import { Sidebar } from './components/Sidebar';
 import { FilterSection } from './components/FilterSection';
@@ -9,6 +10,7 @@ import { RepresentantesTable } from './components/RepresentantesTable';
 import { EditColegiadoModal } from './components/EditColegiadoModal';
 import { ViewRepresentacoesModal } from './components/ViewRepresentacoesModal';
 import { EditRepresentanteBasicoModal } from './components/EditRepresentanteBasicoModal';
+import { EditRepresentacaoModal } from './components/EditRepresentacaoModal';
 import { Menu } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
@@ -16,345 +18,231 @@ import { TagItem } from './components/TagsManager';
 export default function App() {
   const [activeMenuItem, setActiveMenuItem] = useState('colegiados');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
   const [editingColegiado, setEditingColegiado] = useState<any | null>(null);
+  const [colegiados, setColegiados] = useState<any[]>([]);
   
-  const [viewingRepresentacoes, setViewingRepresentacoes] = useState<{ id: number; nome?: string; nome_colegiado?: string } | null>(null);
+  const [representacoes, setRepresentacoes] = useState<any[]>([]);
+  const [pessoas, setPessoas] = useState<any[]>([]); 
+  
+  const [isPessoaModalOpen, setIsPessoaModalOpen] = useState(false);
+  const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null);
+  const [editingPessoaData, setEditingPessoaData] = useState<any | null>(null);
+  
+  const [isRepresentacaoModalOpen, setIsRepresentacaoModalOpen] = useState(false);
+  const [editingRepresentacaoId, setEditingRepresentacaoId] = useState<number | null>(null);
+  const [editingRepresentacaoData, setEditingRepresentacaoData] = useState<any | null>(null);
 
-  const [editingRepresentante, setEditingRepresentante] = useState<{ id: number; nome: string } | null>(null);
+  const [viewingColegiado, setViewingColegiado] = useState<{ id: number; nome_colegiado?: string } | null>(null);
+  const [viewingPessoa, setViewingPessoa] = useState<{ id: number; nome?: string } | null>(null);
   
+  const [refreshModalView, setRefreshModalView] = useState(0);
+
   const [colegiadosFilters, setColegiadosFilters] = useState({
-    nomeColegiado: '',
-    coordenacao: '',
-    temas: '',
-    status: 'todos',
-    principalSub: 'todos',
-    atuacaoMIDR: 'todos',
-    internoMinisterial: 'todos',
-    filtroEtiquetas: '',
+    nomeColegiado: '', coordenacao: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '',
   });
   const [colegiadosTags, setColegiadosTags] = useState<string[]>([]);
   
   const [representantesFilters, setRepresentantesFilters] = useState({
-    nomeRepresentante: '',
-    nomeColegiado: '',
-    temas: '',
-    status: 'todos',
-    principalSub: 'todos',
-    atuacaoMIDR: 'todos',
-    internoMinisterial: 'todos',
-    filtroEtiquetas: '',
+    nomeRepresentante: '', nomeColegiado: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '',
   });
   const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
 
-  const [colegiados, setColegiados] = useState<any[]>([]);
   const fetchDadosColegiados = async (filtros = {}) => {
     try {
       const data = await api.getColegiados(filtros);
-      console.log("DADOS RETORNADOS:", data);
-
-      const mappedData = data.map((col: any) => ({
-        ...col,
-        numeroRepresentantes: 0,
-        tags: col.tags ? col.tags : [], 
-      }));
+      const mappedData = data.map((col: any) => ({ ...col, numeroRepresentantes: col.representacoes?.length || 0, tags: col.tags ? col.tags : [] }));
       setColegiados(mappedData);
-    } catch (error) {
-      console.error("Erro ao carregar banco de dados:", error);
-    }
+    } catch (error) { console.error(error); }
   };
 
-  // Carregamento inicial (sem filtros)
+  const fetchDadosRepresentantes = async () => {
+    try {
+      const pessoasData = await api.getRepresentantes();
+      setPessoas(pessoasData);
+      if(api.getAllRepresentacoes) {
+        const repData = await api.getAllRepresentacoes();
+        setRepresentacoes(repData);
+      }
+    } catch (error) { console.error(error); }
+  };
+
   useEffect(() => {
-    fetchDadosColegiados();
+    fetchDadosColegiados(); fetchDadosRepresentantes();
   }, []);
 
-  // Mock data for Representantes page based on the screenshot with colored tags
-  const [representantes, setRepresentantes] = useState<any[]>([]);
+  const totalColegiados = colegiados.length;
+  const totalRepresentantes = representacoes.length;
 
-  const totalColegiados = colegiados.length
-  const totalRepresentantes = colegiados.reduce((acc, col) => acc + (col.numeroRepresentantes || 0), 0);
-
-  // Colegiados filter handlers
-  const handleColegiadosFilterChange = (key: string, value: string | string[]) => {
-    setColegiadosFilters(prev => ({ ...prev, [key]: value }));
-  };
-
+  const handleColegiadosFilterChange = (key: string, value: string | string[]) => setColegiadosFilters(prev => ({ ...prev, [key]: value }));
   const handleColegiadosClearFilters = () => {
-    const filtrosVazios = {
-      nomeColegiado: '',
-      coordenacao: '',
-      temas: '',
-      status: 'todos',
-      principalSub: 'todos',
-      atuacaoMIDR: 'todos',
-      internoMinisterial: 'todos',
-      filtroEtiquetas: '',
-    };
-    
-    setColegiadosFilters(filtrosVazios);
-    setColegiadosTags([]);
-    
-    // Dispara a requisição recarregando a tabela sem filtros
-    fetchDadosColegiados(filtrosVazios);
+    const vazios = { nomeColegiado: '', coordenacao: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '' };
+    setColegiadosFilters(vazios); setColegiadosTags([]); fetchDadosColegiados(vazios);
   };
-
-  const handleColegiadosApplyFilters = () => {
-    // Dispara a requisição passando o estado atual dos filtros
-    fetchDadosColegiados(colegiadosFilters);
-  };
- 
-  const handleColegiadosRemoveTag = (tag: string) => {
-    setColegiadosTags(colegiadosTags.filter(t => t !== tag));
-  };
+  const handleColegiadosApplyFilters = () => fetchDadosColegiados(colegiadosFilters);
+  const handleColegiadosRemoveTag = (tag: string) => setColegiadosTags(colegiadosTags.filter(t => t !== tag));
 
   const handleColegiadoTagsChange = async (id: number, tags: TagItem[]) => {
     const colegiadoAtual = colegiados.find(c => c.id === id);
     if (!colegiadoAtual) return;
-
-    const { numeroRepresentantes, ...dadosLimpos } = colegiadoAtual;
-    
-    const colegiadoAtualizado = { ...dadosLimpos, tags: tags };
-
     setColegiados(prev => prev.map(col => col.id === id ? { ...col, tags } : col));
-
-    try {
-      console.log("ENVIANDO PARA O BANCO:", colegiadoAtualizado);
-      await api.updateColegiado(id, { ...colegiadoAtual, tags: tags });
-    } catch (error) {
-      console.error("Erro no PUT das etiquetas:", error);
-      alert("A etiqueta não foi salva no banco! Abra o F12 para ver o erro.");
-    }
+    try { await api.updateColegiado(id, { ...colegiadoAtual, tags: tags }); } catch (error) {}
   };
 
-  const handleRepresentantesFilterChange = (key: string, value: string | string[]) => {
-    setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
-  };
-
+  const handleRepresentantesFilterChange = (key: string, value: string | string[]) => setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
   const handleRepresentantesClearFilters = () => {
-    setRepresentantesFilters({
-      nomeRepresentante: '',
-      nomeColegiado: '',
-      temas: '',
-      status: 'todos',
-      principalSub: 'todos',
-      atuacaoMIDR: 'todos',
-      internoMinisterial: 'todos',
-      filtroEtiquetas: '',
-    });
+    setRepresentantesFilters({ nomeRepresentante: '', nomeColegiado: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '' });
     setRepresentantesTags([]);
   };
-
-  const handleRepresentantesApplyFilters = () => {
-    console.log('Applying representantes filters:', representantesFilters);
-  };
-
-  const handleRepresentantesRemoveTag = (tag: string) => {
-    setRepresentantesTags(representantesTags.filter(t => t !== tag));
-  };
-
-  const handleRepresentanteTagsChange = (id: string, tags: TagItem[]) => {
-    setRepresentantes(prev => 
-      prev.map(rep => rep.id === id ? { ...rep, tags } : rep)
-    );
-  };
-
-  const handleOpenNewColegiado = () => {
-    setEditingColegiado(null);
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditColegiado = (id: number) => {
-    const colegiado = colegiados.find(c => c.id === id);
-    if (colegiado) {    
-      setEditingColegiado(colegiado);
-      setIsEditModalOpen(true);
-    }
-  };
-
-  const handleDeleteColegiado = async (id: number) => {
-    try {
-      await api.deleteColegiado(id);
-      setColegiados(prev => prev.filter(c => c.id !== id));
-      alert("Colegiado excluído com sucesso!");
-    } catch (error) {
-      console.error("Erro ao excluir colegiado:", error);
-      alert("Ocorreu um erro ao excluir o colegiado.");
-    }
-  };
-
-  const handleViewRepresentantes = (id: number) => {
-    const colegiado = colegiados.find(c => c.id === id);
-    if (colegiado) {
-      setViewingRepresentacoes({ id: colegiado.id, nome_colegiado: colegiado.nome_colegiado });
-    }
-  };
-
-  const handleViewRepresentacoes = (id: string) => {
-    const representante = representantes.find(r => r.id === id);
-    if (representante) {
-      setViewingRepresentacoes({ id: parseInt(id), nome: representante.nome });
-    }
-  };
-
-  const handleEditRepresentante = (id: string) => {
-    const representante = representantes.find(r => r.id === id);
-    if (representante) {
-      setEditingRepresentante({ id: representante.id, nome: representante.nome });
-    }
-  };
-
-  const getPageTitle = () => {
-    switch (activeMenuItem) {
-      case 'colegiados':
-        return 'Colegiados';
-      case 'representantes':
-        return 'Representantes';
-      case 'area-dados':
-        return 'Área de dados';
-      default:
-        return 'Colegiados';
-    }
-  };
+  const handleRepresentantesRemoveTag = (tag: string) => setRepresentantesTags(representantesTags.filter(t => t !== tag));
 
   return (
     <div className="flex min-h-screen bg-[#f3f4f6]">
-  
+      <Toaster position="top-right" richColors />
+      
       <EditColegiadoModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        onSave={() => {
-        
-          api.getColegiados().then(data => setColegiados(data));
-          setIsEditModalOpen(false);
-        }} 
-        colegiado={editingColegiado}
-        listaColegiados={colegiados}
+        isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} 
+        onSave={async () => { await fetchDadosColegiados(); setIsEditModalOpen(false); }} 
+        colegiado={editingColegiado} listaColegiados={colegiados}
       />
 
-      <ViewRepresentacoesModal
-        isOpen={!!viewingRepresentacoes}
-        onClose={() => setViewingRepresentacoes(null)}
-        colegiado={viewingRepresentacoes && viewingRepresentacoes.nome_colegiado ? viewingRepresentacoes : null}
-        representante={viewingRepresentacoes && viewingRepresentacoes.nome ? viewingRepresentacoes : null}
-      />
-
-      {/* Edit Representante Basico Modal */}
       <EditRepresentanteBasicoModal
-        isOpen={!!editingRepresentante}
-        onClose={() => setEditingRepresentante(null)}
-        representante={editingRepresentante}
+        isOpen={isPessoaModalOpen} onClose={() => { setIsPessoaModalOpen(false); setEditingPessoaId(null); setEditingPessoaData(null); }}
+        representanteId={editingPessoaId} initialData={editingPessoaData}
+        onSave={async (data) => {
+          if (!editingPessoaId) { await api.createRepresentante(data); } 
+          else { 
+            // @ts-ignore
+            await api.updateRepresentante(editingPessoaId, data); 
+          }
+          await fetchDadosRepresentantes(); setIsPessoaModalOpen(false);
+        }}
+      />
+      
+      <ViewRepresentacoesModal
+        isOpen={!!viewingColegiado || !!viewingPessoa} 
+        onClose={() => { setViewingColegiado(null); setViewingPessoa(null); }}
+        colegiado={viewingColegiado}
+        representante={viewingPessoa}
+        refreshTrigger={refreshModalView} 
+        listaColegiados={colegiados}
+        onOpenVinculo={(id: number) => { 
+          setEditingRepresentacaoId(null);
+          setEditingRepresentacaoData({ colegiado_id: id });
+          setIsRepresentacaoModalOpen(true);
+        }}
+        onOpenVinculoPessoa={(id: number) => { 
+          setEditingRepresentacaoId(null);
+          setEditingRepresentacaoData({ representante_id: id });
+          setIsRepresentacaoModalOpen(true);
+        }}
+        onEditRepresentacao={(id: number) => { 
+          setEditingRepresentacaoData(representacoes.find(r => r.id === id));
+          setEditingRepresentacaoId(id);
+          setIsRepresentacaoModalOpen(true); 
+        }}
+        onDeleteRepresentacao={async (id: number) => {
+          try {
+            await api.deleteRepresentacao(id);
+            toast.success('Vínculo excluído com sucesso!');
+            await fetchDadosRepresentantes();
+            await fetchDadosColegiados();
+            setRefreshModalView(prev => prev + 1);
+          } catch (error: any) {
+            toast.error(error.message || 'Erro ao excluir o vínculo.');
+          }
+        }}
       />
 
-      <Sidebar 
-        activeItem={activeMenuItem} 
-        onItemClick={(item) => {
-          setActiveMenuItem(item);
-          setMobileMenuOpen(false);
+      <EditRepresentacaoModal
+        isOpen={isRepresentacaoModalOpen} onClose={() => { setIsRepresentacaoModalOpen(false); setEditingRepresentacaoId(null); setEditingRepresentacaoData(null); }}
+        representacaoId={editingRepresentacaoId} initialData={editingRepresentacaoData}
+        pessoasDisponiveis={pessoas} colegiadosDisponiveis={colegiados}
+        onSave={async (data) => {
+          if (!editingRepresentacaoId) { 
+            await api.createRepresentacao(data); 
+            toast.success('Vínculo criado com sucesso!');
+          } else { 
+            // @ts-ignore
+            await api.updateRepresentacao(editingRepresentacaoId, data); 
+            toast.success('Vínculo atualizado!');
+          }
+          await fetchDadosRepresentantes(); 
+          await fetchDadosColegiados(); 
+          setRefreshModalView(prev => prev + 1); // Avisa a tela de fundo para recarregar as tabelas!
+          setIsRepresentacaoModalOpen(false);
         }}
-        mobileMenuOpen={mobileMenuOpen}
-        onCloseMobileMenu={() => setMobileMenuOpen(false)}
       />
+
+      <Sidebar activeItem={activeMenuItem} onItemClick={(item) => { setActiveMenuItem(item); setMobileMenuOpen(false); }} mobileMenuOpen={mobileMenuOpen} onCloseMobileMenu={() => setMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-[#003366] text-white py-4 px-4 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden text-white hover:bg-white/10 p-2 rounded"
-            >
-              <Menu size={24} />
-            </button>
-            <h1 className="text-white">{getPageTitle()}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-              <span className="text-sm">JV</span>
-            </div>
-            <span className="text-sm hidden sm:inline">João Veras</span>
-          </div>
+          <div className="flex items-center gap-3"><button onClick={() => setMobileMenuOpen(true)} className="lg:hidden text-white hover:bg-white/10 p-2"><Menu size={24} /></button><h1 className="text-white">{activeMenuItem === 'colegiados' ? 'Colegiados' : activeMenuItem === 'representantes' ? 'Representantes' : 'Área de dados'}</h1></div>
         </header>
 
         <div className="flex-1 p-4 md:p-8">
           {activeMenuItem === 'colegiados' && (
             <>
-              <div className="mb-6">
-                <FilterSection
-                  filters={colegiadosFilters}
-                  onFilterChange={handleColegiadosFilterChange}
-                  onClearFilters={handleColegiadosClearFilters}
-                  onApplyFilters={handleColegiadosApplyFilters}
-                  tags={colegiadosTags}
-                  onRemoveTag={handleColegiadosRemoveTag}
-                />
-              </div>
-
-              <SummaryBar 
-                page="colegiados"
-                totalColegiados={totalColegiados}
-                totalRepresentantes={totalRepresentantes}
+              <div className="mb-6"><FilterSection filters={colegiadosFilters} onFilterChange={handleColegiadosFilterChange} onClearFilters={handleColegiadosClearFilters} onApplyFilters={handleColegiadosApplyFilters} tags={colegiadosTags} onRemoveTag={handleColegiadosRemoveTag} /></div>
+              <SummaryBar page="colegiados" totalColegiados={totalColegiados} totalRepresentantes={totalRepresentantes} />
+              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Gestão de Colegiados</h1><Button onClick={() => { setEditingColegiado(null); setIsEditModalOpen(true); }}>+ Novo Colegiado</Button></div>
+              <ColegiadosTable 
+                colegiados={colegiados} 
+                onEdit={(id) => { 
+                  setEditingColegiado(colegiados.find(c => c.id === id)); 
+                  setIsEditModalOpen(true); 
+                }} 
+                onViewRepresentantes={(id) => {
+                  setViewingColegiado({ 
+                    id, 
+                    nome_colegiado: colegiados.find(c => c.id === id)?.nome_colegiado 
+                  });
+                }} 
+                onTagsChange={handleColegiadoTagsChange} 
+                onDelete={async (id) => { 
+                  await api.deleteColegiado(id); 
+                  fetchDadosColegiados(); 
+                }} 
               />
-
-              {/* Table */}
-
-              <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold">Gestão de Colegiados</h1>
-              {/* Este é o botão que abre o Modal */}
-              <Button onClick={handleOpenNewColegiado}>
-                + Novo Colegiado
-              </Button>
-            </div>
-
-              <div className="mt-6">
-                <ColegiadosTable
-                  colegiados={colegiados}
-                  onEdit={handleEditColegiado}
-                  onViewRepresentantes={handleViewRepresentantes}
-                  onTagsChange={handleColegiadoTagsChange}
-                  onDelete={handleDeleteColegiado}
-                />
-              </div>
             </>
           )}
 
           {activeMenuItem === 'representantes' && (
             <>
-              {/* Filters */}
-              <div className="mb-6">
-                <RepresentantesFilterSection
-                  filters={representantesFilters}
-                  onFilterChange={handleRepresentantesFilterChange}
-                  onClearFilters={handleRepresentantesClearFilters}
-                  onApplyFilters={handleRepresentantesApplyFilters}
-                  tags={representantesTags}
-                  onRemoveTag={handleRepresentantesRemoveTag}
-                />
-              </div>
-
-              {/* Summary */}
-              <SummaryBar 
-                page="representantes"
-                totalColegiados={totalColegiados}
-                totalRepresentantes={totalRepresentantes}
+              <div className="mb-6"><RepresentantesFilterSection filters={representantesFilters} onFilterChange={handleRepresentantesFilterChange} onClearFilters={handleRepresentantesClearFilters} onApplyFilters={() => console.log(representantesFilters)} tags={representantesTags} onRemoveTag={handleRepresentantesRemoveTag} /></div>
+              <SummaryBar page="representantes" totalColegiados={totalColegiados} totalRepresentantes={totalRepresentantes} />
+              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Quadro de Representantes</h1><Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button></div>
+              <RepresentantesTable
+                representantes={pessoas.map((p: any) => ({
+                  id: p.id,
+                  nome: p.nome,
+                  status: 'Ativo',
+                  tags: []
+                }))}
+                onEditRepresentante={(id: number) => { 
+                  setEditingPessoaData(pessoas.find((p: any) => p.id === id)); 
+                  setEditingPessoaId(id); 
+                  setIsPessoaModalOpen(true); 
+                }}
+                onViewRepresentacoes={(id: number) => {
+                  const pessoa = pessoas.find((p: any) => p.id === id);
+                  if (pessoa) setViewingPessoa({ id: pessoa.id, nome: pessoa.nome });
+                }}
+                onDeleteRepresentante={async (id: number) => {
+                  try {
+                    await api.deleteRepresentante(id);
+                    toast.success('Representante e todos os seus vínculos foram excluídos!');
+                    await fetchDadosRepresentantes();
+                    await fetchDadosColegiados();
+                  } catch (error: any) {
+                    toast.error(error.message || 'Erro ao excluir o representante.');
+                  }
+                }}
+                onTagsChange={(id: number, tags: TagItem[]) => { console.log(id, tags); }}
               />
-
-              {/* Table */}
-              <div className="mt-6">
-                <RepresentantesTable
-                  representantes={representantes}
-                  onViewRepresentacoes={handleViewRepresentacoes}
-                  onEditRepresentante={handleEditRepresentante}
-                  onTagsChange={handleRepresentanteTagsChange}
-                />
-              </div>
             </>
-          )}
-
-          {activeMenuItem === 'area-dados' && (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-[#6b7280]">Área de dados em desenvolvimento</p>
-            </div>
           )}
         </div>
       </div>

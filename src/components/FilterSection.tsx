@@ -114,29 +114,29 @@ export function FilterSection({
           </Label>
           <Select value={filters.atuacaoMIDR} onValueChange={(value: string) => onFilterChange('atuacaoMIDR', value)}>
             <SelectTrigger id="atuacao-midr" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Atuação" />
+              <SelectValue placeholder="Selecione a atuação" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="participante">Participante</SelectItem>
-              <SelectItem value="coordenador">Coordenador</SelectItem>
-              <SelectItem value="participante">Participante</SelectItem>
+              <SelectItem value="Preside">Preside</SelectItem>
+              <SelectItem value="Participa">Participa</SelectItem>
+              <SelectItem value="Coordena">Coordena</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="interno-ministerial" className="text-[#4b5563]">
-            Interno/ministerial
+            Interno/Interministerial
           </Label>
           <Select value={filters.internoMinisterial} onValueChange={(value: string) => onFilterChange('internoMinisterial', value)}>
             <SelectTrigger id="interno-ministerial" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Interministerial" />
+              <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="interno">Interno</SelectItem>
-              <SelectItem value="interministerial">Interministerial</SelectItem>
+              <SelectItem value="Interno">Interno</SelectItem>
+              <SelectItem value="Interministerial">Interministerial</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List,  Dict, Any
 from enum import Enum
 
@@ -50,20 +50,49 @@ class ColegiadoBase(BaseModel):
             raise ValueError('Este campo não pode ser vazio')
         return v
 
+class ColegiadoCreate(ColegiadoBase):
+    pass
+
+class Colegiado(ColegiadoBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 class RepresentanteBase(BaseModel):
     nome: str
+    secretaria: str
+    sigla_secretaria: str
+    cargo: Optional[str] = None
+    departamento: Optional[str] = None
+    sigla_departamento: Optional[str] = None
+    cce_fce: Optional[str] = None
 
 class RepresentanteCreate(RepresentanteBase):
     pass
 
 class Representante(RepresentanteBase):
     id: int
-
     class Config:
         from_attributes = True
 
-class Colegiado(ColegiadoBase):
-    id: int
+class RepresentacaoBase(BaseModel):
+    colegiado_id: int
+    representante_id: int
+    status: str = Field(..., description="ativo, inativo, exonerado, ou em estruturação")
+    tipo_representacao: str = Field(..., description="Titular, Suplente, ou Ponto focal")
+    data_ato_indicacao: str
+    ato_indicacao: Optional[str] = None
+    link_portaria: Optional[str] = None
+    numero_processo: Optional[str] = None
+    data_expiracao: Optional[str] = None
 
+class RepresentacaoCreate(RepresentacaoBase):
+    pass
+
+class Representacao(RepresentacaoBase):
+    id: int
+    representante: Representante
+    
     class Config:
         from_attributes = True

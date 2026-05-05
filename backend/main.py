@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, String
+from sqlalchemy import cast, String
 from typing import List, Optional 
 from database import get_db
+from sqlalchemy.exc import IntegrityError
 import models, schemas, database
 
 app = FastAPI(title="Sistema de Gestão de Colegiados - MIDR")
@@ -50,25 +51,26 @@ def listar_colegiados(
 ):
     query = db.query(models.Colegiado)
 
-    print(f"--- FILTRO DE ETIQUETA RECEBIDO: {filtroEtiquetas} ---")
-
     if nomeColegiado:
-        query = query.filter(models.Colegiado.nome_colegiado.ilike(f"%{nomeColegiado}%"))
+        query = query.filter(models.Colegiado.nome_colegiado.ilike(f"%{nomeColegiado.strip()}%"))
     if coordenacao:
-        query = query.filter(models.Colegiado.coordenacao.ilike(f"%{coordenacao}%"))
+        query = query.filter(models.Colegiado.coordenacao.ilike(f"%{coordenacao.strip()}%"))
     if temas:
-        query = query.filter(models.Colegiado.temas.ilike(f"%{temas}%"))
-    
-    if status and status != "todos":
-        query = query.filter(func.lower(models.Colegiado.status_vigencia) == status.lower())
-    if principalSub and principalSub != "todos":
-        query = query.filter(func.lower(models.Colegiado.principal_subcolegiado) == principalSub.lower())
-    if atuacaoMIDR and atuacaoMIDR != "todos":
-        query = query.filter(func.lower(models.Colegiado.atuacao_midr) == atuacaoMIDR.lower())
-    if internoMinisterial and internoMinisterial != "todos":
-        query = query.filter(func.lower(models.Colegiado.interno_interministerial) == internoMinisterial.lower())        
+        query = query.filter(models.Colegiado.temas.ilike(f"%{temas.strip()}%"))
+    if status and status.lower() != "todos":
+        query = query.filter(models.Colegiado.status_vigencia.ilike(f"%{status.strip()}%"))
+        
+    if principalSub and principalSub.lower() != "todos":
+        query = query.filter(models.Colegiado.principal_subcolegiado.ilike(f"%{principalSub.strip()}%"))
+        
+    if atuacaoMIDR and atuacaoMIDR.lower() != "todos":
+        query = query.filter(models.Colegiado.atuacao_midr.ilike(f"%{atuacaoMIDR.strip()}%"))
+        
+    if internoMinisterial and internoMinisterial.lower() != "todos":
+        query = query.filter(models.Colegiado.interno_interministerial.ilike(f"%{internoMinisterial.strip()}%"))        
+
     if filtroEtiquetas:
-        query = query.filter(cast(models.Colegiado.tags, String).ilike(f"%{filtroEtiquetas}%"))
+        query = query.filter(cast(models.Colegiado.tags, String).ilike(f"%{filtroEtiquetas.strip()}%"))
 
     return query.all()
 
@@ -114,17 +116,32 @@ def atualizar_colegiado(colegiado_id: int, colegiado: schemas.ColegiadoBase, db:
     db.refresh(db_colegiado)
     return db_colegiado
 
-@app.get("/representantes", response_model=List[schemas.Representante])
-def listar_representantes(db: Session = Depends(database.get_db)):
-    return db.query(models.Representante).all()
+@app.post("/representantes/", response_model=schemas.Representante)
+def criar_representante(representante: schemas.RepresentanteCreate, db: Session = Depends(get_db)):
+    try:
+        db_rep = models.Representante(**representante.dict())
+        db.add(db_rep)
+        db.commit()
+        db.refresh(db_rep)
+        return db_rep
+    except IntegrityError:
+        db.rollback() 
+        raise HTTPException(status_code=400, detail="Já existe um representante cadastrado com este exato nome.")
 
-@app.post("/representantes", response_model=schemas.Representante)
-def criar_representante(representante: schemas.RepresentanteCreate, db: Session = Depends(database.get_db)):
-    db_representante = models.Representante(**representante.model_dump())
-    db.add(db_representante)
+@app.put("/representantes/{rep_id}", response_model=schemas.Representante)
+def atualizar_representante(rep_id: int, representante: schemas.RepresentanteCreate, db: Session = Depends(get_db)):
+    db_rep = db.query(models.Representante).filter(models.Representante.id == rep_id).first()
+    if not db_rep:
+        raise HTTPException(status_code=404, detail="Representante não encontrado")
+    for key, value in representante.dict().items():
+        setattr(db_rep, key, value)
     db.commit()
-    db.refresh(db_representante)
-    return db_representante
+    db.refresh(db_rep)
+    return db_rep
+
+@app.get("/representantes/", response_model=List[schemas.Representante])
+def listar_representantes(db: Session = Depends(get_db)):
+    return db.query(models.Representante).all()
 
 @app.delete("/colegiados/{colegiado_id}")
 def deletar_colegiado(colegiado_id: int, db: Session = Depends(database.get_db)):
@@ -136,3 +153,30 @@ def deletar_colegiado(colegiado_id: int, db: Session = Depends(database.get_db))
     db.delete(db_colegiado)
     db.commit()
     return {"message": "Colegiado excluído com sucesso"}
+
+@app.post("/representacoes/", response_model=schemas.Representacao)
+def criar_representacao(representacao: schemas.RepresentacaoCreate, db: Session = Depends(get_db)):
+    db_representacao = models.Representacao(**representacao.dict())
+    db.add(db_representacao)
+    db.commit()
+    db.refresh(db_representacao)
+    return db_representacao
+
+@app.get("/colegiados/{colegiado_id}/representacoes/", response_model=List[schemas.Representacao])
+def listar_representacoes_por_colegiado(colegiado_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Representacao).filter(models.Representacao.colegiado_id == colegiado_id).all()
+
+@app.get("/representacoes/", response_model=List[schemas.Representacao])
+def listar_todas_representacoes(db: Session = Depends(get_db)):
+    return db.query(models.Representacao).all()
+
+@app.put("/representacoes/{vinc_id}", response_model=schemas.Representacao)
+def atualizar_representacao(vinc_id: int, representacao: schemas.RepresentacaoCreate, db: Session = Depends(get_db)):
+    db_vinc = db.query(models.Representacao).filter(models.Representacao.id == vinc_id).first()
+    if not db_vinc:
+        raise HTTPException(status_code=404, detail="Vínculo não encontrado")
+    for key, value in representacao.dict().items():
+        setattr(db_vinc, key, value)
+    db.commit()
+    db.refresh(db_vinc)
+    return db_vinc

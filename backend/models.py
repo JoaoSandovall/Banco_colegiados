@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -19,21 +19,35 @@ class Colegiado(Base):
     subcolegiado_ligado_ao = Column(String, nullable=True)
     tags = Column(JSON, default=list)
     
-    representantes = relationship("Representante", back_populates="colegiado_rel")
+    representacoes = relationship("Representacao", back_populates="colegiado", cascade="all, delete-orphan")
 
 class Representante(Base):
     __tablename__ = "representantes"
 
     id = Column(Integer, primary_key=True, index=True)
-    colegiado_id = Column(Integer, ForeignKey("colegiados.id"))
-    nome_colegiado_txt = Column(String)
-    representante_nome = Column(String, nullable=False)
-    tipo_representacao = Column(String)
-    cargo_representante = Column(String)
-    secretaria_representante = Column(String)
-    sigla_secretaria = Column(String)
-    ato_indicacao = Column(String)
-    link_portaria = Column(String)
-    data_ato_indicacao = Column(Date, nullable=True)
-    numero_processo_rep = Column(String)
-    colegiado_rel = relationship("Colegiado", back_populates="representantes")
+    nome = Column(String, unique=True, index=True, nullable=False) 
+    cargo = Column(String, nullable=True)
+    secretaria = Column(String, nullable=False)
+    sigla_secretaria = Column(String, nullable=False)
+    departamento = Column(String, nullable=True)
+    sigla_departamento = Column(String, nullable=True)
+    cce_fce = Column(String, nullable=True)
+
+    representacoes = relationship("Representacao", back_populates="representante", cascade="all, delete-orphan")
+
+class Representacao(Base):
+    __tablename__ = "representacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    colegiado_id = Column(Integer, ForeignKey("colegiados.id"), nullable=False)
+    representante_id = Column(Integer, ForeignKey("representantes.id"), nullable=False)
+    status = Column(String, nullable=False) 
+    tipo_representacao = Column(String, nullable=False) 
+    data_ato_indicacao = Column(String, nullable=False)
+    ato_indicacao = Column(String, nullable=True)
+    link_portaria = Column(String, nullable=True)
+    numero_processo = Column(String, nullable=True)
+    data_expiracao = Column(String, nullable=True)
+
+    colegiado = relationship("Colegiado", back_populates="representacoes")
+    representante = relationship("Representante", back_populates="representacoes")
