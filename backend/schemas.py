@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Optional, List,  Dict, Any
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
+from typing import Optional, List, Dict, Any
 from enum import Enum
 
 class StatusVigencia(str, Enum):
@@ -20,14 +20,13 @@ class AtuacaoMIDR(str, Enum):
     participa = "Participa"
 
 class ColegiadoBase(BaseModel):
-    model_config = {"use_enum_values": True}
+    model_config = ConfigDict(use_enum_values=True)
 
     nome_colegiado: str
     status_vigencia: StatusVigencia
     objeto_finalidade: str
     principal_subcolegiado: TipoColegiado
     interno_interministerial: AmbitoColegiado
-    temas: str
     link_normativo: Optional[str] = None
     coordenacao: str
     atuacao_midr: AtuacaoMIDR 
@@ -43,7 +42,7 @@ class ColegiadoBase(BaseModel):
             raise ValueError('Um colegiado principal não pode estar ligado a outro.')
         return self
 
-    @field_validator('nome_colegiado', 'objeto_finalidade', 'temas', 'coordenacao')
+    @field_validator('nome_colegiado', 'objeto_finalidade', 'coordenacao')
     @classmethod
     def name_must_not_be_empty(cls, v: str) -> str:
         if not v or v.strip() == "":
@@ -56,8 +55,8 @@ class ColegiadoCreate(ColegiadoBase):
 class Colegiado(ColegiadoBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RepresentanteBase(BaseModel):
     nome: str
@@ -67,14 +66,16 @@ class RepresentanteBase(BaseModel):
     departamento: Optional[str] = None
     sigla_departamento: Optional[str] = None
     cce_fce: Optional[str] = None
+    status: Optional[str] = "Ativo"
 
 class RepresentanteCreate(RepresentanteBase):
     pass
 
 class Representante(RepresentanteBase):
     id: int
-    class Config:
-        from_attributes = True
+    
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RepresentacaoBase(BaseModel):
     colegiado_id: int
@@ -94,5 +95,4 @@ class Representacao(RepresentacaoBase):
     id: int
     representante: Representante
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

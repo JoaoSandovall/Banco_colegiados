@@ -119,7 +119,7 @@ def atualizar_colegiado(colegiado_id: int, colegiado: schemas.ColegiadoBase, db:
 @app.post("/representantes/", response_model=schemas.Representante)
 def criar_representante(representante: schemas.RepresentanteCreate, db: Session = Depends(get_db)):
     try:
-        db_rep = models.Representante(**representante.dict())
+        db_rep = models.Representante(**representante.model_dump())
         db.add(db_rep)
         db.commit()
         db.refresh(db_rep)
@@ -133,11 +133,22 @@ def atualizar_representante(rep_id: int, representante: schemas.RepresentanteCre
     db_rep = db.query(models.Representante).filter(models.Representante.id == rep_id).first()
     if not db_rep:
         raise HTTPException(status_code=404, detail="Representante não encontrado")
-    for key, value in representante.dict().items():
+    for key, value in representante.model_dump().items():
         setattr(db_rep, key, value)
     db.commit()
     db.refresh(db_rep)
     return db_rep
+
+@app.delete("/representantes/{rep_id}")
+def deletar_representante(rep_id: int, db: Session = Depends(get_db)):
+    db_rep = db.query(models.Representante).filter(models.Representante.id == rep_id).first()
+    
+    if not db_rep:
+        raise HTTPException(status_code=404, detail="Representante não encontrado")
+        
+    db.delete(db_rep)
+    db.commit()
+    return {"message": "Representante excluído com sucesso"}
 
 @app.get("/representantes/", response_model=List[schemas.Representante])
 def listar_representantes(db: Session = Depends(get_db)):
@@ -156,7 +167,15 @@ def deletar_colegiado(colegiado_id: int, db: Session = Depends(database.get_db))
 
 @app.post("/representacoes/", response_model=schemas.Representacao)
 def criar_representacao(representacao: schemas.RepresentacaoCreate, db: Session = Depends(get_db)):
-    db_representacao = models.Representacao(**representacao.dict())
+    db_rep = db.query(models.Representante).filter(models.Representante.id == representacao.representante_id).first()
+    if not db_rep:
+        raise HTTPException(status_code=404, detail="Representante não encontrado na base.")
+        
+    db_col = db.query(models.Colegiado).filter(models.Colegiado.id == representacao.colegiado_id).first()
+    if not db_col:
+        raise HTTPException(status_code=404, detail="Colegiado não encontrado na base.")
+
+    db_representacao = models.Representacao(**representacao.model_dump())
     db.add(db_representacao)
     db.commit()
     db.refresh(db_representacao)
@@ -175,7 +194,7 @@ def atualizar_representacao(vinc_id: int, representacao: schemas.RepresentacaoCr
     db_vinc = db.query(models.Representacao).filter(models.Representacao.id == vinc_id).first()
     if not db_vinc:
         raise HTTPException(status_code=404, detail="Vínculo não encontrado")
-    for key, value in representacao.dict().items():
+    for key, value in representacao.model_dump().items():
         setattr(db_vinc, key, value)
     db.commit()
     db.refresh(db_vinc)

@@ -2,26 +2,26 @@ import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Edit, Users, Heart, Trash2 } from 'lucide-react'; 
+import { Users, Heart, Pencil, Eye } from 'lucide-react'; 
 import { TagsManager, TagItem } from './TagsManager';
 import { FilterSection } from './FilterSection';
-import { fetchColegiados} from '../service/api';
+import { fetchColegiados } from '../service/api';
 
 interface Colegiado {
   id: number;
   nome_colegiado: string;
-  status_vigencia: 'Ativo' | 'Inativo' | 'Em estruturação';
+  status_vigencia: 'Ativo' | 'Inativo' | 'Em estruturação' | string;
   numeroRepresentantes: number;
   destacado?: boolean;
   tags?: TagItem[];
 }
 
 interface ColegiadosTableProps {
-  colegiados: Colegiado[];
+  colegiados: any[];
   onEdit: (id: number) => void;
   onViewRepresentantes: (id: number) => void;
   onTagsChange: (id: number, tags: TagItem[]) => void;
-  onDelete: (id: number) => void; 
+  onViewColegiado: (id: number) => void;
 }
 
 const TAG_COLORS = [
@@ -92,7 +92,7 @@ export const ColegiadosManager = () => {
   const handleEdit = (id: number) => console.log("Edit", id);
   const handleViewRepresentantes = (id: number) => console.log("View", id);
   const handleTagsChange = (id: number, newTags: TagItem[]) => console.log("Tags", id, newTags);
-  const handleDelete = (id: number) => console.log("Delete", id);
+  const handleViewColegiado = (id: number) => console.log("View Colegiado", id);
 
   return (
     <div className="space-y-6">
@@ -109,18 +109,18 @@ export const ColegiadosManager = () => {
         onEdit={handleEdit}
         onViewRepresentantes={handleViewRepresentantes}
         onTagsChange={handleTagsChange}
-        onDelete={handleDelete}
+        onViewColegiado={handleViewColegiado}
       />
     </div>
   );
 };
 
 export function ColegiadosTable({ 
-  colegiados, 
-  onEdit,
+  colegiados,
+  onEdit, 
   onViewRepresentantes,
-  onTagsChange, 
-  onDelete 
+  onTagsChange,
+  onViewColegiado 
 }: ColegiadosTableProps) {
   
   const getStatusColor = (status: string) => {
@@ -167,14 +167,23 @@ export function ColegiadosTable({
                 key={colegiado.id}
                 className="hover:bg-[#f9fafb] transition-colors"
               >
+                
+                {/* 1. Nome do Colegiado (Agora como Link) */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#1a1a1a]">{colegiado.nome_colegiado}</span>
+                    <button 
+                      onClick={() => onViewColegiado(colegiado.id)}
+                      className="text-[#003366] hover:text-[#2563eb] hover:underline font-medium text-left transition-colors outline-none"
+                    >
+                      {colegiado.nome_colegiado}
+                    </button>
                     {colegiado.destacado && (
                       <Heart size={16} className="text-[#dc2626] fill-[#dc2626] flex-shrink-0" />
                     )}
                   </div>
                 </TableCell>
+                
+                {/* 2. Status */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <Badge 
                     variant="outline" 
@@ -183,14 +192,18 @@ export function ColegiadosTable({
                     {colegiado.status_vigencia}
                   </Badge>
                 </TableCell>
+                
+                {/* 3. Número de Representantes */}
                 <TableCell className="py-4 px-4 md:px-6 text-right text-[#1a1a1a]">
                   {colegiado.numeroRepresentantes}
                 </TableCell>
+                
+                {/* 4. Etiquetas */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2">
                     {colegiado.tags && colegiado.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mr-2">
-                        {colegiado.tags.slice(0, 3).map((tag) => (
+                        {colegiado.tags.slice(0, 3).map((tag: TagItem) => (
                           <Badge
                             key={tag.id}
                             className={`${getColorClasses(tag.color)} text-white px-2 py-0.5 text-xs border-0`}
@@ -215,41 +228,29 @@ export function ColegiadosTable({
                     />
                   </div>
                 </TableCell>
+                
+                {/* 5. Ações */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(colegiado.id)}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onEdit(colegiado.id)} 
                       className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6] hover:text-[#003366] whitespace-nowrap"
                     >
-                      <Edit size={14} className="mr-2" />
-                      Detalhes
+                      <Pencil size={14} className="mr-2" /> Detalhes
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onViewRepresentantes(colegiado.id)}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onViewRepresentantes(colegiado.id)} 
                       className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6] hover:text-[#003366] whitespace-nowrap"
                     >
-                      <Users size={14} className="mr-2" />
-                      Representantes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (window.confirm(`Deseja realmente excluir "${colegiado.nome_colegiado}"?`)) {
-                          onDelete(colegiado.id);
-                        }
-                      }}
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 whitespace-nowrap"
-                    >
-                      <Trash2 size={14} className="mr-2" />
-                      Excluir
+                      <Eye size={14} className="mr-2" /> Membros
                     </Button>
                   </div>
                 </TableCell>
+                
               </TableRow>
             ))}
           </TableBody>

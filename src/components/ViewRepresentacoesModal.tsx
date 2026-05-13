@@ -73,19 +73,21 @@ export function ViewRepresentacoesModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col overflow-hidden bg-white p-0">
+      <DialogContent style={{ maxWidth: '700px', width: '98%', height: '70vh' }} className="bg-white p-0 rounded-md border-0 shadow-xl flex flex-col">
         
         {isPessoa && (
           <>
-            <div className="flex justify-between items-center gap-4 p-6 pb-4 border-b pr-14 shrink-0 bg-slate-50/50">
-              <div className="flex-1">
-                <DialogTitle className="text-xl text-[#003366] font-normal leading-snug">
-                  Representações de: <span className="font-semibold">{representante!.nome}</span>
+            <div className="flex justify-between items-center gap-4 p-6 pb-5 border-b pr-14 shrink-0 bg-slate-50/50">
+              <div className="flex-1 flex flex-col items-start gap-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Vínculos do Representante
+                </p>
+                <DialogTitle className="text-2xl font-extrabold text-[#2563eb] bg-blue-50/60 px-3 py-1.5 rounded-md border border-blue-200 inline-block shadow-sm">
+                  {representante!.nome}
                 </DialogTitle>
-                <p className="text-sm text-gray-500 mt-1">Lista de colegiados onde este representante atua</p>
               </div>
-              <Button onClick={() => onOpenVinculoPessoa && onOpenVinculoPessoa(representante!.id)} className="bg-[#003366] text-white hover:bg-[#002244] flex items-center gap-2 shrink-0" size="sm">
-                <UserPlus size={16} /> Vincular a Novo Colegiado
+              <Button onClick={() => onOpenVinculoPessoa && onOpenVinculoPessoa(representante!.id)} className="bg-[#003366] text-white hover:bg-[#002244] flex items-center gap-2 shrink-0 h-10 px-4">
+                <UserPlus size={18} /> Vincular a Novo Colegiado
               </Button>
             </div>
 
@@ -140,30 +142,22 @@ export function ViewRepresentacoesModal({
 
         {isColegiado && (
           <>
-            <div className="p-6 pb-4 border-b pr-14 shrink-0 bg-slate-50/50">
-              <DialogTitle className="text-xl font-bold text-[#003366]">Detalhes e Membros do Colegiado</DialogTitle>
+            <div className="flex justify-between items-center gap-4 p-6 pb-5 border-b pr-14 shrink-0 bg-slate-50/50">
+              <div className="flex-1 flex flex-col items-start gap-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Membros do Colegiado
+                </p>
+                <DialogTitle className="text-2xl font-extrabold text-[#003366] bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200 inline-block shadow-sm">
+                  {colegiado!.nome_colegiado}
+                </DialogTitle>
+              </div>
+              <Button onClick={() => onOpenVinculo && onOpenVinculo(colegiado!.id)} className="bg-[#003366] text-white hover:bg-[#002244] flex items-center gap-2 shrink-0 h-10 px-4">
+                <UserPlus size={18} /> Vincular Representante
+              </Button>
             </div>
 
-            <div className="p-6 pt-4 flex-1 overflow-y-auto">
-              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 grid gap-5 mb-8">
-                <div className="grid gap-1.5"><Label className="text-[#003366] font-semibold">Nome do Colegiado</Label><p className="text-sm text-gray-800">{colegiado!.nome_colegiado || "N/A"}</p></div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="grid gap-1.5"><Label className="text-gray-500">Status (Vigência)</Label><p className="text-sm text-gray-800">{colegiado!.status_vigencia || "N/A"}</p></div>
-                  <div className="grid gap-1.5"><Label className="text-gray-500">Nº do Processo</Label><p className="text-sm text-gray-800">{colegiado!.numero_processo || "N/A"}</p></div>
-                </div>
-                <div className="grid gap-1.5"><Label className="text-gray-500">Objeto (Finalidade)</Label><p className="text-sm text-gray-800">{colegiado!.objeto_finalidade || "N/A"}</p></div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="grid gap-1.5"><Label className="text-gray-500">Principal/Subcolegiado</Label><p className="text-sm text-gray-800">{colegiado!.principal_subcolegiado || "N/A"}</p></div>
-                  <div className="grid gap-1.5"><Label className="text-gray-500">Interno/Interministerial</Label><p className="text-sm text-gray-800">{colegiado!.interno_interministerial || "N/A"}</p></div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#1a1a1a] flex items-center gap-2"><Users size={18} className="text-[#ea580c]" /> Quadro de Representantes</h3>
-                <Button size="sm" onClick={() => onOpenVinculo && onOpenVinculo(colegiado!.id)} className="bg-[#003366] hover:bg-[#002244] text-white flex items-center gap-2"><UserPlus size={16} /> Vincular Representante</Button>
-              </div>
-              
-              <div className="border rounded-lg overflow-hidden">
+            <div className="p-6 pt-6 flex-1 overflow-y-auto">
+              <div className="border rounded-lg overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-[#f9fafb]">
@@ -175,27 +169,37 @@ export function ViewRepresentacoesModal({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {representacoes.map((rep) => (
-                      <TableRow key={rep.id}>
-                        <TableCell className="font-medium text-[#1a1a1a]">{rep.representante?.nome}</TableCell>
-                        <TableCell className="text-gray-600">{rep.representante?.sigla_secretaria}</TableCell>
-                        <TableCell className="text-gray-600">{rep.tipo_representacao}</TableCell>
-                        <TableCell><Badge variant="outline" className={`${getStatusColor(rep.status)} border font-normal px-3 py-1`}>{rep.status}</Badge></TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => onEditRepresentacao && onEditRepresentacao(rep.id)} className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6]"><Pencil size={14} /></Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDelete(rep.id)} className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"><Trash2 size={14} /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {loading ? (
+                      <TableRow><TableCell colSpan={5} className="text-center py-8">Carregando dados...</TableCell></TableRow>
+                    ) : representacoes.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center py-10 text-gray-500">Este colegiado não possui representantes vinculados.</TableCell></TableRow>
+                    ) : (
+                      representacoes.map((rep) => (
+                        <TableRow key={rep.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-[#1a1a1a]">{rep.representante?.nome}</TableCell>
+                          <TableCell className="text-gray-600">{rep.representante?.sigla_secretaria}</TableCell>
+                          <TableCell className="text-gray-600">{rep.tipo_representacao}</TableCell>
+                          <TableCell><Badge variant="outline" className={`${getStatusColor(rep.status)} border font-normal px-3 py-1`}>{rep.status}</Badge></TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end items-center gap-2">
+                              <Button variant="outline" size="sm" onClick={() => onEditRepresentacao && onEditRepresentacao(rep.id)} className="border-[#d1d5db] text-[#1a1a1a] hover:bg-[#f3f4f6]">
+                                <Pencil size={14} />
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleDelete(rep.id)} className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
             </div>
 
             <div className="p-4 px-6 border-t shrink-0 flex justify-end bg-slate-50/50">
-              <Button onClick={onClose} variant="outline" className="hover:bg-gray-100">Fechar</Button>
+              <Button onClick={onClose} className="bg-[#003366] text-white hover:bg-[#002244] h-10 px-6">Fechar</Button>
             </div>
           </>
         )}

@@ -11,11 +11,16 @@ import { EditColegiadoModal } from './components/EditColegiadoModal';
 import { ViewRepresentacoesModal } from './components/ViewRepresentacoesModal';
 import { EditRepresentanteBasicoModal } from './components/EditRepresentanteBasicoModal';
 import { EditRepresentacaoModal } from './components/EditRepresentacaoModal';
+import { ViewRepresentanteModal } from './components/ViewRepresentanteModal';
 import { Menu } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
+import { ViewColegiadoModal } from './components/ViewColegiadoModal';
 
 export default function App() {
+  const [isViewColegiadoModalOpen, setIsViewColegiadoModalOpen] = useState(false);
+  const [viewingColegiadoData, setViewingColegiadoData] = useState<any | null>(null);
+
   const [activeMenuItem, setActiveMenuItem] = useState('colegiados');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -29,6 +34,9 @@ export default function App() {
   const [isPessoaModalOpen, setIsPessoaModalOpen] = useState(false);
   const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null);
   const [editingPessoaData, setEditingPessoaData] = useState<any | null>(null);
+
+  const [isViewRepresentanteModalOpen, setIsViewRepresentanteModalOpen] = useState(false);
+  const [viewingRepresentanteData, setViewingRepresentanteData] = useState<any | null>(null);
   
   const [isRepresentacaoModalOpen, setIsRepresentacaoModalOpen] = useState(false);
   const [editingRepresentacaoId, setEditingRepresentacaoId] = useState<number | null>(null);
@@ -105,6 +113,13 @@ export default function App() {
         isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} 
         onSave={async () => { await fetchDadosColegiados(); setIsEditModalOpen(false); }} 
         colegiado={editingColegiado} listaColegiados={colegiados}
+        onDelete={async (id) => {
+        if (window.confirm("Excluir este colegiado apagará todos os vínculos de representantes. Confirmar?")) {
+          await api.deleteColegiado(id);
+          fetchDadosColegiados();
+          setIsEditModalOpen(false);
+        }
+  }}
       />
 
       <EditRepresentanteBasicoModal
@@ -118,6 +133,29 @@ export default function App() {
           }
           await fetchDadosRepresentantes(); setIsPessoaModalOpen(false);
         }}
+        onDelete={async (id) => {
+          try {
+            await api.deleteRepresentante(id);
+            toast.success('Representante e todos os seus vínculos foram excluídos!');
+            await fetchDadosRepresentantes();
+            await fetchDadosColegiados();
+            setIsPessoaModalOpen(false);
+          } catch (error: any) {
+            toast.error(error.message || 'Erro ao excluir o representante.');
+          }
+        }}
+      />
+
+      <ViewColegiadoModal 
+        isOpen={isViewColegiadoModalOpen} 
+        onClose={() => setIsViewColegiadoModalOpen(false)} 
+        colegiado={viewingColegiadoData} 
+      />
+
+      <ViewRepresentanteModal
+        isOpen={isViewRepresentanteModalOpen}
+        onClose={() => { setIsViewRepresentanteModalOpen(false); setViewingRepresentanteData(null); }}
+        representante={viewingRepresentanteData}
       />
       
       <ViewRepresentacoesModal
@@ -164,13 +202,12 @@ export default function App() {
             await api.createRepresentacao(data); 
             toast.success('Vínculo criado com sucesso!');
           } else { 
-            // @ts-ignore
             await api.updateRepresentacao(editingRepresentacaoId, data); 
             toast.success('Vínculo atualizado!');
           }
           await fetchDadosRepresentantes(); 
           await fetchDadosColegiados(); 
-          setRefreshModalView(prev => prev + 1); // Avisa a tela de fundo para recarregar as tabelas!
+          setRefreshModalView(prev => prev + 1);
           setIsRepresentacaoModalOpen(false);
         }}
       />
@@ -201,10 +238,10 @@ export default function App() {
                   });
                 }} 
                 onTagsChange={handleColegiadoTagsChange} 
-                onDelete={async (id) => { 
-                  await api.deleteColegiado(id); 
-                  fetchDadosColegiados(); 
-                }} 
+                onViewColegiado={(id: number) => {
+                  setViewingColegiadoData(colegiados.find(c => c.id === id));
+                  setIsViewColegiadoModalOpen(true);
+                }}
               />
             </>
           )}
@@ -218,28 +255,26 @@ export default function App() {
                 representantes={pessoas.map((p: any) => ({
                   id: p.id,
                   nome: p.nome,
-                  status: 'Ativo',
+                  status: p.status || 'Ativo',
                   tags: []
                 }))}
+                
+                onViewRepresentante={(id: number) => {
+                  setViewingRepresentanteData(pessoas.find((p: any) => p.id === id));
+                  setIsViewRepresentanteModalOpen(true);
+                }}
+
                 onEditRepresentante={(id: number) => { 
                   setEditingPessoaData(pessoas.find((p: any) => p.id === id)); 
                   setEditingPessoaId(id); 
                   setIsPessoaModalOpen(true); 
                 }}
+                
                 onViewRepresentacoes={(id: number) => {
                   const pessoa = pessoas.find((p: any) => p.id === id);
                   if (pessoa) setViewingPessoa({ id: pessoa.id, nome: pessoa.nome });
                 }}
-                onDeleteRepresentante={async (id: number) => {
-                  try {
-                    await api.deleteRepresentante(id);
-                    toast.success('Representante e todos os seus vínculos foram excluídos!');
-                    await fetchDadosRepresentantes();
-                    await fetchDadosColegiados();
-                  } catch (error: any) {
-                    toast.error(error.message || 'Erro ao excluir o representante.');
-                  }
-                }}
+                
                 onTagsChange={(id: number, tags: TagItem[]) => { console.log(id, tags); }}
               />
             </>
