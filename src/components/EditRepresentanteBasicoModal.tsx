@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Minus } from 'lucide-react';
 
 export interface RepresentanteBase {
   id?: number;
@@ -70,8 +70,12 @@ export function EditRepresentanteBasicoModal({
   
   const [loading, setLoading] = useState(false);
   const [opcoesSecretaria, setOpcoesSecretaria] = useState(SECRETARIAS_OPCOES_INICIAIS);
+  
   const [isNovaSecretariaModalOpen, setIsNovaSecretariaModalOpen] = useState(false);
   const [novaSecretaria, setNovaSecretaria] = useState({ nome: '', sigla: '' });
+
+  const [isRemoverSecretariaModalOpen, setIsRemoverSecretariaModalOpen] = useState(false);
+  const [secretariaToRemove, setSecretariaToRemove] = useState('');
 
   const [formData, setFormData] = useState({
     nome: '', secretaria: '', sigla_secretaria: '', departamento: '', sigla_departamento: '', cargo: '', cce_fce: '', status: 'Ativo'
@@ -134,6 +138,24 @@ export function EditRepresentanteBasicoModal({
     toast.success('Nova secretaria adicionada à lista!');
   };
 
+  const handleConfirmarRemocaoSecretaria = () => {
+    if (!secretariaToRemove) {
+      toast.error('Selecione uma secretaria para remover.');
+      return;
+    }
+    if (window.confirm(`Tem certeza que deseja remover "${secretariaToRemove}" da lista de opções?`)) {
+      setOpcoesSecretaria(prev => prev.filter(s => s.nome !== secretariaToRemove));
+      
+      if (formData.secretaria === secretariaToRemove) {
+        setFormData(prev => ({ ...prev, secretaria: '', sigla_secretaria: '' }));
+      }
+      
+      setIsRemoverSecretariaModalOpen(false);
+      setSecretariaToRemove('');
+      toast.success('Secretaria removida da lista.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.nome.trim() || !formData.secretaria.trim()) {
       toast.error('Preencha os campos obrigatórios (Nome e Secretaria).');
@@ -175,7 +197,7 @@ export function EditRepresentanteBasicoModal({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+          <div className="px-6 py-6 max-h-[70vh] overflow-y-auto overflow-x-hidden">
             <div className="mb-6">
               <Label htmlFor="nome" className="block mb-2 text-[15px] font-semibold text-gray-800">Nome</Label>
               <Input id="nome" name="nome" value={formData.nome} onChange={handleChange} className="w-full h-11 border border-gray-400 rounded-md px-3 focus-visible:ring-1 focus-visible:ring-[#003366]" />
@@ -208,34 +230,56 @@ export function EditRepresentanteBasicoModal({
 
             <hr className="my-8 border-gray-200" />
 
-            <div className="mb-6">
+            <div className="mb-6 w-full">
               <div className="flex items-center gap-2 mb-2">
                 <Label htmlFor="secretaria" className="text-[15px] font-semibold text-gray-800">Secretaria</Label>
-                <button type="button" onClick={() => setIsNovaSecretariaModalOpen(true)} className="flex items-center justify-center w-5 h-5 bg-[#22c55e] text-white rounded hover:bg-[#16a34a] transition-colors" title="Adicionar nova secretaria">
-                  <Plus size={14} strokeWidth={3} />
+                
+                <button 
+                  type="button" 
+                  onClick={() => setIsNovaSecretariaModalOpen(true)} 
+                  style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+                  className="flex items-center justify-center w-6 h-6 rounded hover:opacity-80 transition-opacity shadow-sm border-0" 
+                  title="Adicionar nova secretaria"
+                >
+                  <Plus size={16} strokeWidth={3} />
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={() => { setSecretariaToRemove(''); setIsRemoverSecretariaModalOpen(true); }} 
+                  style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
+                  className="flex items-center justify-center w-6 h-6 rounded hover:opacity-80 transition-opacity shadow-sm border-0" 
+                  title="Remover secretaria da lista"
+                >
+                  <Minus size={16} strokeWidth={3} />
                 </button>
               </div>
+              
               <Select value={formData.secretaria} onValueChange={handleSecretariaChange}>
-                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3">
+                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3 overflow-hidden [&>span]:truncate">
                   <SelectValue placeholder="Selecione a secretaria..." />
                 </SelectTrigger>
-                <SelectContent className="max-h-[250px] border border-gray-300">
+                <SelectContent className="max-h-[250px] border border-gray-300 max-w-[90vw] overflow-hidden">
                   {opcoesSecretaria.map((sec) => (
-                    <SelectItem key={sec.nome} value={sec.nome} className="py-2">{sec.nome}</SelectItem>
+                    <SelectItem key={sec.nome} value={sec.nome} className="py-2 truncate pr-2" title={sec.nome}>
+                      {sec.nome}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="mb-2">
+            <div className="mb-2 w-full">
               <Label htmlFor="departamento" className="block mb-2 text-[15px] font-semibold text-gray-800">Departamento do Representante</Label>
               <Select value={formData.departamento || ""} onValueChange={(val: string) => handleSelectChange('departamento', val)}>
-                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3">
+                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3 overflow-hidden [&>span]:truncate">
                   <SelectValue placeholder="Selecione o departamento..." />
                 </SelectTrigger>
-                <SelectContent className="border border-gray-300">
+                <SelectContent className="border border-gray-300 max-w-[90vw]">
                   {formData.departamento && (
-                      <SelectItem key={formData.departamento} value={formData.departamento} className="py-2">{formData.departamento}</SelectItem>
+                      <SelectItem key={formData.departamento} value={formData.departamento} className="py-2 truncate pr-2" title={formData.departamento}>
+                        {formData.departamento}
+                      </SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -257,7 +301,6 @@ export function EditRepresentanteBasicoModal({
               )}
             </div>
 
-            {/* LADO DIREITO: Botões Cancelar e Salvar */}
             <div className="flex gap-2">
               <Button variant="outline" onClick={onClose} disabled={loading} className="h-10 border-gray-400">Cancelar</Button>
               <Button onClick={handleSubmit} className="bg-[#22c55e] text-white hover:bg-[#16a34a] h-10" disabled={loading}>
@@ -286,6 +329,41 @@ export function EditRepresentanteBasicoModal({
           <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 rounded-b-md">
             <Button variant="outline" onClick={() => setIsNovaSecretariaModalOpen(false)} className="h-10 border-gray-400">Cancelar</Button>
             <Button onClick={handleAdicionarNovaSecretaria} className="bg-[#22c55e] text-white hover:bg-[#16a34a] h-10">Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRemoverSecretariaModalOpen} onOpenChange={setIsRemoverSecretariaModalOpen}>
+        <DialogContent style={{ maxWidth: '450px', width: '95%' }} className="bg-white p-0 rounded-md border-0 shadow-lg overflow-hidden">
+          <DialogHeader className="px-6 py-5 border-b border-gray-200">
+            <DialogTitle className="text-lg font-medium text-[#003366]">Remover Secretaria</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 py-6 overflow-hidden">
+            <div className="mb-2 w-full">
+              <Label className="block mb-2 text-[15px] font-semibold text-gray-800">Selecione a secretaria para excluir da lista</Label>
+              <Select value={secretariaToRemove} onValueChange={setSecretariaToRemove}>
+                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3 overflow-hidden [&>span]:truncate">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[250px] border border-gray-300 max-w-[80vw] overflow-hidden">
+                  {opcoesSecretaria.map((sec) => (
+                    <SelectItem key={`rem-${sec.nome}`} value={sec.nome} className="py-2 truncate pr-2" title={sec.nome}>
+                      {sec.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 rounded-b-md">
+            <Button variant="outline" onClick={() => setIsRemoverSecretariaModalOpen(false)} className="h-10 border-gray-400">Cancelar</Button>
+            <Button 
+              onClick={handleConfirmarRemocaoSecretaria} 
+              style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
+              className="border-0 h-10 shadow-sm hover:opacity-80 transition-opacity"
+            >
+              Excluir
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
