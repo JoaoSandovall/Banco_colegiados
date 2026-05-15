@@ -168,7 +168,6 @@ export function ColegiadosTable({
                 className="hover:bg-[#f9fafb] transition-colors"
               >
                 
-                {/* 1. Nome do Colegiado (Agora como Link) */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2">
                     <button 
@@ -183,7 +182,6 @@ export function ColegiadosTable({
                   </div>
                 </TableCell>
                 
-                {/* 2. Status */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <Badge 
                     variant="outline" 
@@ -193,12 +191,10 @@ export function ColegiadosTable({
                   </Badge>
                 </TableCell>
                 
-                {/* 3. Número de Representantes */}
                 <TableCell className="py-4 px-4 md:px-6 text-right text-[#1a1a1a]">
                   {colegiado.numeroRepresentantes}
                 </TableCell>
                 
-                {/* 4. Etiquetas */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2">
                     {colegiado.tags && colegiado.tags.length > 0 && (
@@ -229,7 +225,6 @@ export function ColegiadosTable({
                   </div>
                 </TableCell>
                 
-                {/* 5. Ações */}
                 <TableCell className="py-4 px-4 md:px-6">
                   <div className="flex items-center gap-2 justify-end">
                     <Button 

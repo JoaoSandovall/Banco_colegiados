@@ -52,9 +52,21 @@ export default function App() {
   });
   const [colegiadosTags, setColegiadosTags] = useState<string[]>([]);
   
-  const [representantesFilters, setRepresentantesFilters] = useState({
-    nomeRepresentante: '', nomeColegiado: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '',
-  });
+  const filtrosPadraoRepresentantes = {
+    nomeColegiado: '',
+    status: 'todos',
+    nomeRepresentante: '',
+    tipoRepresentacao: 'todos',
+    cceFce: '',
+    cargo: '',
+    secretaria: '',
+    departamento: '',
+    atoIndicacao: '',
+    dataAtoIndicacao: '',
+    numeroProcesso: ''
+  };
+  const [representantesFilters, setRepresentantesFilters] = useState(filtrosPadraoRepresentantes);
+  const [activeRepFilters, setActiveRepFilters] = useState(filtrosPadraoRepresentantes);
   const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
 
   const fetchDadosColegiados = async (filtros = {}) => {
@@ -100,10 +112,54 @@ export default function App() {
 
   const handleRepresentantesFilterChange = (key: string, value: string | string[]) => setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
   const handleRepresentantesClearFilters = () => {
-    setRepresentantesFilters({ nomeRepresentante: '', nomeColegiado: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '' });
+    setRepresentantesFilters(filtrosPadraoRepresentantes);
+    setActiveRepFilters(filtrosPadraoRepresentantes);
     setRepresentantesTags([]);
   };
+
+  const handleRepresentantesApplyFilters = () => {
+    setActiveRepFilters(representantesFilters);
+  };
+
   const handleRepresentantesRemoveTag = (tag: string) => setRepresentantesTags(representantesTags.filter(t => t !== tag));
+
+  const pessoasExibidas = pessoas.filter((pessoa: any) => {
+    const f = activeRepFilters;
+    
+    if (f.nomeRepresentante && !pessoa.nome?.toLowerCase().includes(f.nomeRepresentante.toLowerCase())) return false;
+    if (f.status !== 'todos' && (pessoa.status || 'Ativo').toLowerCase() !== f.status.toLowerCase()) return false;
+    if (f.cceFce && !pessoa.cce_fce?.toLowerCase().includes(f.cceFce.toLowerCase())) return false;
+    if (f.cargo && !pessoa.cargo?.toLowerCase().includes(f.cargo.toLowerCase())) return false;
+    if (f.secretaria && !pessoa.secretaria?.toLowerCase().includes(f.secretaria.toLowerCase())) return false;
+    if (f.departamento && !pessoa.departamento?.toLowerCase().includes(f.departamento.toLowerCase())) return false;
+    
+    const hasVinculoFilters = f.nomeColegiado || f.tipoRepresentacao !== 'todos' || f.atoIndicacao || f.dataAtoIndicacao || f.numeroProcesso;
+    
+    if (hasVinculoFilters) {
+      const pReps = representacoes.filter(r => r.representante_id === pessoa.id);
+      
+      if (pReps.length === 0) return false; 
+      
+      const matchVinculo = pReps.some(r => {
+        const c = colegiados.find(col => col.id === r.colegiado_id);
+        if (f.nomeColegiado && (!c || !c.nome_colegiado?.toLowerCase().includes(f.nomeColegiado.toLowerCase()))) return false;
+        if (f.tipoRepresentacao !== 'todos' && r.tipo_representacao?.toLowerCase() !== f.tipoRepresentacao.toLowerCase()) return false;
+        if (f.atoIndicacao && !r.ato_indicacao?.toLowerCase().includes(f.atoIndicacao.toLowerCase())) return false;
+        if (f.dataAtoIndicacao && r.data_ato_indicacao !== f.dataAtoIndicacao) return false;
+        if (f.numeroProcesso && !r.numero_processo?.toLowerCase().includes(f.numeroProcesso.toLowerCase())) return false;
+        return true;
+      });
+      
+      if (!matchVinculo) return false;
+    }
+    
+    return true;
+  });
+
+  const opcoesNomesRepresentantes = Array.from(new Set(pessoas.map((p: any) => p.nome))).filter(Boolean) as string[];
+  const opcoesNomesColegiados = Array.from(new Set(colegiados.map((c: any) => c.nome_colegiado))).filter(Boolean) as string[];
+  const opcoesSecretarias = Array.from(new Set(pessoas.map((p: any) => p.secretaria))).filter(Boolean) as string[];
+  const opcoesDepartamentos = Array.from(new Set(pessoas.map((p: any) => p.departamento))).filter(Boolean) as string[];
 
   return (
     <div className="flex min-h-screen bg-[#f3f4f6]">
@@ -248,15 +304,27 @@ export default function App() {
 
           {activeMenuItem === 'representantes' && (
             <>
-              <div className="mb-6"><RepresentantesFilterSection filters={representantesFilters} onFilterChange={handleRepresentantesFilterChange} onClearFilters={handleRepresentantesClearFilters} onApplyFilters={() => console.log(representantesFilters)} tags={representantesTags} onRemoveTag={handleRepresentantesRemoveTag} /></div>
-              <SummaryBar page="representantes" totalColegiados={totalColegiados} totalRepresentantes={totalRepresentantes} />
+              <div className="mb-6">
+                <RepresentantesFilterSection 
+                  filters={representantesFilters} 
+                  onFilterChange={handleRepresentantesFilterChange} 
+                  onClearFilters={handleRepresentantesClearFilters} 
+                  onApplyFilters={handleRepresentantesApplyFilters}
+                  opcoesRepresentantes={opcoesNomesRepresentantes}
+                  opcoesColegiados={opcoesNomesColegiados}
+                  opcoesSecretarias={opcoesSecretarias}
+                  opcoesDepartamentos={opcoesDepartamentos}
+                />
+                
+              </div>
+              <SummaryBar page="representantes" totalColegiados={totalColegiados} totalRepresentantes={pessoasExibidas.length} />
               <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Quadro de Representantes</h1><Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button></div>
               <RepresentantesTable
-                representantes={pessoas.map((p: any) => ({
+                representantes={pessoasExibidas.map((p: any) => ({
                   id: p.id,
                   nome: p.nome,
                   status: p.status || 'Ativo',
-                  tags: []
+                  tags: p.tags || []
                 }))}
                 
                 onViewRepresentante={(id: number) => {
