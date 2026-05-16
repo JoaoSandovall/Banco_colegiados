@@ -67,9 +67,18 @@ class RepresentanteBase(BaseModel):
     sigla_departamento: Optional[str] = None
     cce_fce: Optional[str] = None
     status: Optional[str] = "Ativo"
+    tags: Optional[List[Any]] = []
 
 class RepresentanteCreate(RepresentanteBase):
-    pass
+    nome: str
+    secretaria: str
+    sigla_secretaria: str
+    departamento: Optional[str] = None
+    sigla_departamento: Optional[str] = None
+    cargo: Optional[str] = None
+    cce_fce: Optional[str] = None
+    status: Optional[str] = "Ativo"
+    tags: Optional[List[Dict[str, Any]]] = []
 
 class Representante(RepresentanteBase):
     id: int

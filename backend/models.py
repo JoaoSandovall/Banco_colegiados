@@ -33,6 +33,7 @@ class Representante(Base):
     sigla_departamento = Column(String, nullable=True)
     cce_fce = Column(String, nullable=True)
     status = Column(String, default="Ativo")
+    tags = Column(JSON, default=[])
     representacoes = relationship("Representacao", back_populates="representante", cascade="all, delete-orphan")
     
 
@@ -43,7 +44,6 @@ class Representacao(Base):
     colegiado_id = Column(Integer, ForeignKey("colegiados.id"), nullable=False)
     representante_id = Column(Integer, ForeignKey("representantes.id"), nullable=False)
     
-    # Dados da participação em si
     status = Column(String, nullable=False) 
     tipo_representacao = Column(String, nullable=False) 
     data_ato_indicacao = Column(String, nullable=False)
@@ -52,6 +52,5 @@ class Representacao(Base):
     numero_processo = Column(String, nullable=True)
     data_expiracao = Column(String, nullable=True)
 
-    # Relacionamentos bidirecionais
     colegiado = relationship("Colegiado", back_populates="representacoes")
     representante = relationship("Representante", back_populates="representacoes")

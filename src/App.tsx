@@ -63,8 +63,10 @@ export default function App() {
     departamento: '',
     atoIndicacao: '',
     dataAtoIndicacao: '',
-    numeroProcesso: ''
+    numeroProcesso: '',
+    filtroEtiquetas: ''
   };
+
   const [representantesFilters, setRepresentantesFilters] = useState(filtrosPadraoRepresentantes);
   const [activeRepFilters, setActiveRepFilters] = useState(filtrosPadraoRepresentantes);
   const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
@@ -80,7 +82,9 @@ export default function App() {
   const fetchDadosRepresentantes = async () => {
     try {
       const pessoasData = await api.getRepresentantes();
-      setPessoas(pessoasData);
+      const mappedPessoas = pessoasData.map((p: any) => ({ ...p, tags: p.tags ? p.tags : [] }));
+      setPessoas(mappedPessoas);
+      
       if(api.getAllRepresentacoes) {
         const repData = await api.getAllRepresentacoes();
         setRepresentacoes(repData);
@@ -110,6 +114,31 @@ export default function App() {
     try { await api.updateColegiado(id, { ...colegiadoAtual, tags: tags }); } catch (error) {}
   };
 
+  const handleRepresentanteTagsChange = async (id: number, tags: TagItem[]) => {
+    const pAtual = pessoas.find(p => p.id === id);
+    if (!pAtual) return;
+    
+    setPessoas(prev => prev.map(p => p.id === id ? { ...p, tags } : p));
+    
+    try { 
+      const payload = {
+        nome: pAtual.nome,
+        status: pAtual.status || 'Ativo',
+        cce_fce: pAtual.cce_fce || '',
+        cargo: pAtual.cargo || '',
+        secretaria: pAtual.secretaria || '',
+        departamento: pAtual.departamento || '',
+        sigla_secretaria: pAtual.sigla_secretaria || '',
+        sigla_departamento: pAtual.sigla_departamento || '',
+        tags: tags
+      };
+      
+      await api.updateRepresentante(id, payload); 
+    } catch (error) {
+      console.error("Erro ao atualizar tags do representante:", error);
+    }
+  };
+
   const handleRepresentantesFilterChange = (key: string, value: string | string[]) => setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
   const handleRepresentantesClearFilters = () => {
     setRepresentantesFilters(filtrosPadraoRepresentantes);
@@ -133,6 +162,12 @@ export default function App() {
     if (f.secretaria && !pessoa.secretaria?.toLowerCase().includes(f.secretaria.toLowerCase())) return false;
     if (f.departamento && !pessoa.departamento?.toLowerCase().includes(f.departamento.toLowerCase())) return false;
     
+    if (f.filtroEtiquetas) {
+      const termoBusca = f.filtroEtiquetas.toLowerCase();
+      const possuiTag = pessoa.tags && pessoa.tags.some((t: TagItem) => t.text.toLowerCase().includes(termoBusca));
+      if (!possuiTag) return false;
+    }
+
     const hasVinculoFilters = f.nomeColegiado || f.tipoRepresentacao !== 'todos' || f.atoIndicacao || f.dataAtoIndicacao || f.numeroProcesso;
     
     if (hasVinculoFilters) {
@@ -343,7 +378,7 @@ export default function App() {
                   if (pessoa) setViewingPessoa({ id: pessoa.id, nome: pessoa.nome });
                 }}
                 
-                onTagsChange={(id: number, tags: TagItem[]) => { console.log(id, tags); }}
+                onTagsChange={handleRepresentanteTagsChange}
               />
             </>
           )}
