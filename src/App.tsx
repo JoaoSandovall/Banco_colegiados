@@ -12,10 +12,11 @@ import { ViewRepresentacoesModal } from './components/ViewRepresentacoesModal';
 import { EditRepresentanteBasicoModal } from './components/EditRepresentanteBasicoModal';
 import { EditRepresentacaoModal } from './components/EditRepresentacaoModal';
 import { ViewRepresentanteModal } from './components/ViewRepresentanteModal';
-import { Menu } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
 import { ViewColegiadoModal } from './components/ViewColegiadoModal';
+import * as XLSX from 'xlsx';
+import { Menu, Download } from 'lucide-react';
 
 export default function App() {
   const [isViewColegiadoModalOpen, setIsViewColegiadoModalOpen] = useState(false);
@@ -196,6 +197,46 @@ export default function App() {
   const opcoesSecretarias = Array.from(new Set(pessoas.map((p: any) => p.secretaria))).filter(Boolean) as string[];
   const opcoesDepartamentos = Array.from(new Set(pessoas.map((p: any) => p.departamento))).filter(Boolean) as string[];
 
+  const exportarColegiadosParaExcel = () => {
+    const dados = colegiados.map(c => ({
+      'Nome do Colegiado': c.nome_colegiado,
+      'Status': c.status_vigencia,
+      'Âmbito': c.interno_interministerial,
+      'Nº Processo': c.numero_processo,
+      'Principal/Subcolegiado': c.principal_subcolegiado,
+      'Atuação MIDR': c.atuacao_midr,
+      'Temas': c.temas,
+      'Coordenação': c.coordenacao,
+      'Nº de Representantes': c.numeroRepresentantes,
+      'Etiquetas': c.tags?.map((t: any) => t.text).join(', ') || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dados);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Colegiados");
+    XLSX.writeFile(workbook, "Relatorio_Colegiados.xlsx");
+  };
+
+  const exportarRepresentantesParaExcel = () => {
+    // Usa pessoasExibidas para exportar apenas os que estão visíveis no filtro atual
+    const dados = pessoasExibidas.map(p => ({
+      'Nome': p.nome,
+      'Status': p.status || 'Ativo',
+      'Cargo': p.cargo,
+      'CCE/FCE': p.cce_fce,
+      'Secretaria': p.secretaria,
+      'Sigla Secretaria': p.sigla_secretaria,
+      'Departamento': p.departamento,
+      'Sigla Departamento': p.sigla_departamento,
+      'Etiquetas': p.tags?.map((t: any) => t.text).join(', ') || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dados);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Representantes");
+    XLSX.writeFile(workbook, "Relatorio_Representantes.xlsx");
+  };
+
   return (
     <div className="flex min-h-screen bg-[#f3f4f6]">
       <Toaster position="top-right" richColors />
@@ -315,7 +356,15 @@ export default function App() {
             <>
               <div className="mb-6"><FilterSection filters={colegiadosFilters} onFilterChange={handleColegiadosFilterChange} onClearFilters={handleColegiadosClearFilters} onApplyFilters={handleColegiadosApplyFilters} tags={colegiadosTags} onRemoveTag={handleColegiadosRemoveTag} /></div>
               <SummaryBar page="colegiados" totalColegiados={totalColegiados} totalRepresentantes={totalRepresentantes} />
-              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Gestão de Colegiados</h1><Button onClick={() => { setEditingColegiado(null); setIsEditModalOpen(true); }}>+ Novo Colegiado</Button></div>
+              <div className="flex justify-between items-center mb-6 mt-6">
+                <h1 className="text-2xl font-bold">Quadro de Representantes</h1>
+                <div className="flex gap-3">
+                  <Button onClick={exportarRepresentantesParaExcel} variant="outline" className="border-[#003366] text-[#003366] hover:bg-[#f3f4f6] flex items-center gap-2">
+                    <Download size={16} /> Exportar
+                  </Button>
+                  <Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button>
+                </div>
+              </div>
               <ColegiadosTable 
                 colegiados={colegiados} 
                 onEdit={(id) => { 
@@ -353,7 +402,15 @@ export default function App() {
                 
               </div>
               <SummaryBar page="representantes" totalColegiados={totalColegiados} totalRepresentantes={pessoasExibidas.length} />
-              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Quadro de Representantes</h1><Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button></div>
+              <div className="flex justify-between items-center mb-6 mt-6">
+                <h1 className="text-2xl font-bold">Gestão de Colegiados</h1>
+                <div className="flex gap-3">
+                  <Button onClick={exportarColegiadosParaExcel} variant="outline" className="border-[#003366] text-[#003366] hover:bg-[#f3f4f6] flex items-center gap-2">
+                    <Download size={16} /> Exportar
+                  </Button>
+                  <Button onClick={() => { setEditingColegiado(null); setIsEditModalOpen(true); }}>+ Novo Colegiado</Button>
+                </div>
+              </div>
               <RepresentantesTable
                 representantes={pessoasExibidas.map((p: any) => ({
                   id: p.id,
