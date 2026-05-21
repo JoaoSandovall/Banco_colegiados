@@ -1,26 +1,29 @@
-import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { X } from 'lucide-react';
+import { Input } from './ui/input';
+import { MultiSelect } from './MultiSelect';
 
-interface FilterSectionProps {
+export interface FilterSectionProps {
   filters: {
-    nomeColegiado: string;
-    coordenacao: string;
-    temas: string;
-    status: string;
-    principalSub: string;
-    atuacaoMIDR: string;
-    internoMinisterial: string;
+    nomeColegiado: string[];
+    coordenacao: string[];
+    temas: string[];
+    status: string[];
+    principalSub: string[];
+    atuacaoMIDR: string[];
+    internoMinisterial: string[];
     filtroEtiquetas: string;
   };
-  onFilterChange: (key: string, value: string | string[]) => void;
+  onFilterChange: (key: string, value: any) => void;
   onClearFilters: () => void;
   onApplyFilters: () => void;
-  tags: string[];
-  onRemoveTag: (tag: string) => void;
+  opcoesNomes?: string[];
+  opcoesCoordenacoes?: string[];
+  opcoesTemas?: string[];
+  opcoesStatus?: string[];
+  opcoesPrincipalSub?: string[];
+  opcoesAtuacao?: string[];
+  opcoesInternoMin?: string[];
 }
 
 export function FilterSection({ 
@@ -28,170 +31,56 @@ export function FilterSection({
   onFilterChange, 
   onClearFilters, 
   onApplyFilters,
-  tags,
-  onRemoveTag
+  opcoesNomes = [],
+  opcoesCoordenacoes = [],
+  opcoesTemas = [],
+  opcoesStatus = [],
+  opcoesPrincipalSub = [],
+  opcoesAtuacao = [],
+  opcoesInternoMin = []
 }: FilterSectionProps) {
   return (
     <div className="bg-[#f9fafb] p-4 md:p-6 rounded-lg border border-border">
-      <h3 className="mb-6 text-[#1a1a1a]">Filtros</h3>
+      <h3 className="mb-6 text-[#1a1a1a] font-bold">Filtros Avançados (Múltipla Escolha)</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
         <div className="space-y-2">
-          <Label htmlFor="nome-colegiado" className="text-[#4b5563]">
-            Nome do Colegiado
-          </Label>
-          <Input
-            id="nome-colegiado"
-            value={filters.nomeColegiado}
-            onChange={(e) => onFilterChange('nomeColegiado', e.target.value)}
-            className="bg-white border-[#d1d5db] h-10"
-            placeholder="Digite o nome"
-          />
+          <Label className="text-[#4b5563]">Nome do Colegiado</Label>
+          <MultiSelect options={opcoesNomes} selected={filters.nomeColegiado} onChange={(v) => onFilterChange('nomeColegiado', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="coordenacao" className="text-[#4b5563]">
-            Coordenação do Colegiado
-          </Label>
-          <Input
-            id="coordenacao"
-            value={filters.coordenacao}
-            onChange={(e) => onFilterChange('coordenacao', e.target.value)}
-            className="bg-white border-[#d1d5db] h-10"
-            placeholder="Digite a coordenação"
-          />
+          <Label className="text-[#4b5563]">Coordenação</Label>
+          <MultiSelect options={opcoesCoordenacoes} selected={filters.coordenacao} onChange={(v) => onFilterChange('coordenacao', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="temas" className="text-[#4b5563]">
-            Temas
-          </Label>
-          <Input
-            id="temas"
-            value={filters.temas}
-            onChange={(e) => onFilterChange('temas', e.target.value)}
-            className="bg-white border-[#d1d5db] h-10"
-            placeholder="Digite os temas"
-          />
+          <Label className="text-[#4b5563]">Temas</Label>
+          <MultiSelect options={opcoesTemas} selected={filters.temas} onChange={(v) => onFilterChange('temas', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="status" className="text-[#4b5563]">
-            Status (Vigência)
-          </Label>
-          <Select value={filters.status} onValueChange={(value: string) => onFilterChange('status', value)}>
-            <SelectTrigger id="status" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="ativo">Ativo</SelectItem>
-              <SelectItem value="inativo">Inativo</SelectItem>
-              <SelectItem value="em-estruturacao">Em estruturação</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-[#4b5563]">Status (Vigência)</Label>
+          <MultiSelect options={opcoesStatus} selected={filters.status} onChange={(v) => onFilterChange('status', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="principal-sub" className="text-[#4b5563]">
-            Principal/Subcol
-          </Label>
-          <Select value={filters.principalSub} onValueChange={(value: string) => onFilterChange('principalSub', value)}>
-            <SelectTrigger id="principal-sub" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Principal" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="principal">Principal</SelectItem>
-              <SelectItem value="subcolegiado">Subcolegiado</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-[#4b5563]">Principal/Subcolegiado</Label>
+          <MultiSelect options={opcoesPrincipalSub} selected={filters.principalSub} onChange={(v) => onFilterChange('principalSub', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="atuacao-midr" className="text-[#4b5563]">
-            Atuação do MIDR
-          </Label>
-          <Select value={filters.atuacaoMIDR} onValueChange={(value: string) => onFilterChange('atuacaoMIDR', value)}>
-            <SelectTrigger id="atuacao-midr" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Selecione a atuação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="Preside">Preside</SelectItem>
-              <SelectItem value="Participa">Participa</SelectItem>
-              <SelectItem value="Coordena">Coordena</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-[#4b5563]">Atuação do MIDR</Label>
+          <MultiSelect options={opcoesAtuacao} selected={filters.atuacaoMIDR} onChange={(v) => onFilterChange('atuacaoMIDR', v)} />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="interno-ministerial" className="text-[#4b5563]">
-            Interno/Interministerial
-          </Label>
-          <Select value={filters.internoMinisterial} onValueChange={(value: string) => onFilterChange('internoMinisterial', value)}>
-            <SelectTrigger id="interno-ministerial" className="bg-white border-[#d1d5db] h-10">
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="Interno">Interno</SelectItem>
-              <SelectItem value="Interministerial">Interministerial</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-[#4b5563]">Interno/Interministerial</Label>
+          <MultiSelect options={opcoesInternoMin} selected={filters.internoMinisterial} onChange={(v) => onFilterChange('internoMinisterial', v)} />
         </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="filtro-etiquetas" className="text-[#4b5563]">
-            Filtrar por Etiquetas (texto)
-          </Label>
-          <Input
-            id="filtro-etiquetas"
-            value={filters.filtroEtiquetas}
-            onChange={(e) => onFilterChange('filtroEtiquetas', e.target.value)}
-            className="bg-white border-[#d1d5db] h-10"
-            placeholder="Digite o texto da etiqueta (ex: Urgente, Revisar...)"
-          />
+        <div className="space-y-2 lg:col-span-2">
+          <Label className="text-[#4b5563]">Filtrar por Etiquetas (Pesquisa de texto livre)</Label>
+          <Input value={filters.filtroEtiquetas} onChange={(e) => onFilterChange('filtroEtiquetas', e.target.value)} className="bg-white border-[#d1d5db] h-10" placeholder="Ex: Urgente, Revisar..." />
         </div>
       </div>
 
-      {tags.length > 0 && (
-        <div className="mt-5">
-          <Label className="text-[#4b5563] mb-2 block">Etiquetas:</Label>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag, index) => (
-              <Badge 
-                key={index} 
-                variant="secondary" 
-                className="bg-[#e5e7eb] text-[#1a1a1a] px-3 py-1 hover:bg-[#d1d5db]"
-              >
-                {tag}
-                <button 
-                  onClick={() => onRemoveTag(tag)}
-                  className="ml-2 hover:text-[#dc2626]"
-                >
-                  <X size={14} />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
-        <Button 
-          variant="outline" 
-          onClick={onClearFilters}
-          className="border-[#d1d5db] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1a1a1a] w-full sm:w-auto"
-        >
-          Descartar Filtros
-        </Button>
-        <Button 
-          onClick={onApplyFilters}
-          className="bg-[#003366] hover:bg-[#004080] text-white w-full sm:w-auto"
-        >
-          Aplicar Filtros
-        </Button>
+      <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-4 border-t border-gray-200">
+        <Button variant="outline" onClick={onClearFilters} className="border-[#d1d5db] text-[#6b7280] hover:bg-[#f3f4f6]">Descartar Filtros</Button>
+        <Button onClick={onApplyFilters} className="bg-[#003366] hover:bg-[#004080] text-white">Aplicar Filtros</Button>
       </div>
     </div>
   );

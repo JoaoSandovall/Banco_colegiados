@@ -12,69 +12,66 @@ import { ViewRepresentacoesModal } from './components/ViewRepresentacoesModal';
 import { EditRepresentanteBasicoModal } from './components/EditRepresentanteBasicoModal';
 import { EditRepresentacaoModal } from './components/EditRepresentacaoModal';
 import { ViewRepresentanteModal } from './components/ViewRepresentanteModal';
+import { Menu } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
 import { ViewColegiadoModal } from './components/ViewColegiadoModal';
-import * as XLSX from 'xlsx';
-import { Menu, Download } from 'lucide-react';
 
 export default function App() {
   const [isViewColegiadoModalOpen, setIsViewColegiadoModalOpen] = useState(false);
   const [viewingColegiadoData, setViewingColegiadoData] = useState<any | null>(null);
-
   const [activeMenuItem, setActiveMenuItem] = useState('colegiados');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingColegiado, setEditingColegiado] = useState<any | null>(null);
   const [colegiados, setColegiados] = useState<any[]>([]);
-  
   const [representacoes, setRepresentacoes] = useState<any[]>([]);
   const [pessoas, setPessoas] = useState<any[]>([]); 
-  
   const [isPessoaModalOpen, setIsPessoaModalOpen] = useState(false);
   const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null);
   const [editingPessoaData, setEditingPessoaData] = useState<any | null>(null);
-
   const [isViewRepresentanteModalOpen, setIsViewRepresentanteModalOpen] = useState(false);
   const [viewingRepresentanteData, setViewingRepresentanteData] = useState<any | null>(null);
-  
   const [isRepresentacaoModalOpen, setIsRepresentacaoModalOpen] = useState(false);
   const [editingRepresentacaoId, setEditingRepresentacaoId] = useState<number | null>(null);
   const [editingRepresentacaoData, setEditingRepresentacaoData] = useState<any | null>(null);
-
   const [viewingColegiado, setViewingColegiado] = useState<{ id: number; nome_colegiado?: string } | null>(null);
   const [viewingPessoa, setViewingPessoa] = useState<{ id: number; nome?: string } | null>(null);
-  
   const [refreshModalView, setRefreshModalView] = useState(0);
 
-  const [colegiadosFilters, setColegiadosFilters] = useState({
-    nomeColegiado: '', coordenacao: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '',
-  });
-  const [colegiadosTags, setColegiadosTags] = useState<string[]>([]);
-  
-  const filtrosPadraoRepresentantes = {
-    nomeColegiado: '',
-    status: 'todos',
-    nomeRepresentante: '',
-    tipoRepresentacao: 'todos',
-    cceFce: '',
-    cargo: '',
-    secretaria: '',
-    departamento: '',
-    atoIndicacao: '',
-    dataAtoIndicacao: '',
-    numeroProcesso: '',
+  const filtrosPadraoColegiados = {
+    nomeColegiado: [] as string[],
+    coordenacao: [] as string[],
+    temas: [] as string[],
+    status: [] as string[],
+    principalSub: [] as string[],
+    atuacaoMIDR: [] as string[],
+    internoMinisterial: [] as string[],
     filtroEtiquetas: ''
   };
+  const [colegiadosFilters, setColegiadosFilters] = useState(filtrosPadraoColegiados);
+  const [activeColFilters, setActiveColFilters] = useState(filtrosPadraoColegiados);
 
+  const filtrosPadraoRepresentantes = {
+    nomeColegiado: [] as string[],
+    status: [] as string[],
+    nomeRepresentante: [] as string[],
+    tipoRepresentacao: [] as string[],
+    cceFce: [] as string[],
+    cargo: [] as string[],
+    secretaria: [] as string[],
+    departamento: [] as string[],
+    atoIndicacao: [] as string[],
+    dataAtoIndicacao: [] as string[],
+    numeroProcesso: [] as string[],
+    filtroEtiquetas: ''
+  };
   const [representantesFilters, setRepresentantesFilters] = useState(filtrosPadraoRepresentantes);
   const [activeRepFilters, setActiveRepFilters] = useState(filtrosPadraoRepresentantes);
-  const [representantesTags, setRepresentantesTags] = useState<string[]>([]);
 
-  const fetchDadosColegiados = async (filtros = {}) => {
+  const fetchDadosColegiados = async () => {
     try {
-      const data = await api.getColegiados(filtros);
+      const data = await api.getColegiados();
       const mappedData = data.map((col: any) => ({ ...col, numeroRepresentantes: col.representacoes?.length || 0, tags: col.tags ? col.tags : [] }));
       setColegiados(mappedData);
     } catch (error) { console.error(error); }
@@ -83,9 +80,7 @@ export default function App() {
   const fetchDadosRepresentantes = async () => {
     try {
       const pessoasData = await api.getRepresentantes();
-      const mappedPessoas = pessoasData.map((p: any) => ({ ...p, tags: p.tags ? p.tags : [] }));
-      setPessoas(mappedPessoas);
-      
+      setPessoas(pessoasData.map((p: any) => ({ ...p, tags: p.tags ? p.tags : [] })));
       if(api.getAllRepresentacoes) {
         const repData = await api.getAllRepresentacoes();
         setRepresentacoes(repData);
@@ -97,16 +92,9 @@ export default function App() {
     fetchDadosColegiados(); fetchDadosRepresentantes();
   }, []);
 
-  const totalColegiados = colegiados.length;
-  const totalRepresentantes = representacoes.length;
-
-  const handleColegiadosFilterChange = (key: string, value: string | string[]) => setColegiadosFilters(prev => ({ ...prev, [key]: value }));
-  const handleColegiadosClearFilters = () => {
-    const vazios = { nomeColegiado: '', coordenacao: '', temas: '', status: 'todos', principalSub: 'todos', atuacaoMIDR: 'todos', internoMinisterial: 'todos', filtroEtiquetas: '' };
-    setColegiadosFilters(vazios); setColegiadosTags([]); fetchDadosColegiados(vazios);
-  };
-  const handleColegiadosApplyFilters = () => fetchDadosColegiados(colegiadosFilters);
-  const handleColegiadosRemoveTag = (tag: string) => setColegiadosTags(colegiadosTags.filter(t => t !== tag));
+  const handleColegiadosFilterChange = (key: string, value: any) => setColegiadosFilters(prev => ({ ...prev, [key]: value }));
+  const handleColegiadosClearFilters = () => { setColegiadosFilters(filtrosPadraoColegiados); setActiveColFilters(filtrosPadraoColegiados); };
+  const handleColegiadosApplyFilters = () => { setActiveColFilters(colegiadosFilters); };
 
   const handleColegiadoTagsChange = async (id: number, tags: TagItem[]) => {
     const colegiadoAtual = colegiados.find(c => c.id === id);
@@ -115,127 +103,97 @@ export default function App() {
     try { await api.updateColegiado(id, { ...colegiadoAtual, tags: tags }); } catch (error) {}
   };
 
+  const colegiadosExibidos = colegiados.filter((c: any) => {
+    const f = activeColFilters;
+    if (f.nomeColegiado.length > 0 && !f.nomeColegiado.includes(c.nome_colegiado)) return false;
+    if (f.coordenacao.length > 0 && !f.coordenacao.includes(c.coordenacao)) return false;
+    if (f.temas.length > 0 && !f.temas.includes(c.temas)) return false;
+    if (f.status.length > 0 && !f.status.includes(c.status_vigencia)) return false;
+    if (f.principalSub.length > 0 && !f.principalSub.includes(c.principal_subcolegiado)) return false;
+    if (f.atuacaoMIDR.length > 0 && !f.atuacaoMIDR.includes(c.atuacao_midr)) return false;
+    if (f.internoMinisterial.length > 0 && !f.internoMinisterial.includes(c.interno_interministerial)) return false;
+    if (f.filtroEtiquetas) {
+      const termoBusca = f.filtroEtiquetas.toLowerCase();
+      const possuiTag = c.tags && c.tags.some((t: TagItem) => t.text.toLowerCase().includes(termoBusca));
+      if (!possuiTag) return false;
+    }
+    return true;
+  });
+
+  const handleRepresentantesFilterChange = (key: string, value: any) => setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
+  const handleRepresentantesClearFilters = () => { setRepresentantesFilters(filtrosPadraoRepresentantes); setActiveRepFilters(filtrosPadraoRepresentantes); };
+  const handleRepresentantesApplyFilters = () => { setActiveRepFilters(representantesFilters); };
+
   const handleRepresentanteTagsChange = async (id: number, tags: TagItem[]) => {
     const pAtual = pessoas.find(p => p.id === id);
     if (!pAtual) return;
-    
     setPessoas(prev => prev.map(p => p.id === id ? { ...p, tags } : p));
-    
     try { 
       const payload = {
-        nome: pAtual.nome,
-        status: pAtual.status || 'Ativo',
-        cce_fce: pAtual.cce_fce || '',
-        cargo: pAtual.cargo || '',
-        secretaria: pAtual.secretaria || '',
-        departamento: pAtual.departamento || '',
-        sigla_secretaria: pAtual.sigla_secretaria || '',
-        sigla_departamento: pAtual.sigla_departamento || '',
-        tags: tags
+        nome: pAtual.nome, status: pAtual.status || 'Ativo', cce_fce: pAtual.cce_fce || '',
+        cargo: pAtual.cargo || '', secretaria: pAtual.secretaria || '', departamento: pAtual.departamento || '',
+        sigla_secretaria: pAtual.sigla_secretaria || '', sigla_departamento: pAtual.sigla_departamento || '', tags: tags
       };
       
       await api.updateRepresentante(id, payload); 
-    } catch (error) {
-      console.error("Erro ao atualizar tags do representante:", error);
-    }
+    } catch (error) { console.error(error); }
   };
-
-  const handleRepresentantesFilterChange = (key: string, value: string | string[]) => setRepresentantesFilters(prev => ({ ...prev, [key]: value }));
-  const handleRepresentantesClearFilters = () => {
-    setRepresentantesFilters(filtrosPadraoRepresentantes);
-    setActiveRepFilters(filtrosPadraoRepresentantes);
-    setRepresentantesTags([]);
-  };
-
-  const handleRepresentantesApplyFilters = () => {
-    setActiveRepFilters(representantesFilters);
-  };
-
-  const handleRepresentantesRemoveTag = (tag: string) => setRepresentantesTags(representantesTags.filter(t => t !== tag));
 
   const pessoasExibidas = pessoas.filter((pessoa: any) => {
     const f = activeRepFilters;
-    
-    if (f.nomeRepresentante && !pessoa.nome?.toLowerCase().includes(f.nomeRepresentante.toLowerCase())) return false;
-    if (f.status !== 'todos' && (pessoa.status || 'Ativo').toLowerCase() !== f.status.toLowerCase()) return false;
-    if (f.cceFce && !pessoa.cce_fce?.toLowerCase().includes(f.cceFce.toLowerCase())) return false;
-    if (f.cargo && !pessoa.cargo?.toLowerCase().includes(f.cargo.toLowerCase())) return false;
-    if (f.secretaria && !pessoa.secretaria?.toLowerCase().includes(f.secretaria.toLowerCase())) return false;
-    if (f.departamento && !pessoa.departamento?.toLowerCase().includes(f.departamento.toLowerCase())) return false;
-    
+    if (f.nomeRepresentante.length > 0 && !f.nomeRepresentante.includes(pessoa.nome)) return false;
+    if (f.status.length > 0 && !f.status.includes(pessoa.status || 'Ativo')) return false;
+    if (f.cceFce.length > 0 && !f.cceFce.includes(pessoa.cce_fce)) return false;
+    if (f.cargo.length > 0 && !f.cargo.includes(pessoa.cargo)) return false;
+    if (f.secretaria.length > 0 && !f.secretaria.includes(pessoa.secretaria)) return false;
+    if (f.departamento.length > 0 && !f.departamento.includes(pessoa.departamento)) return false;
     if (f.filtroEtiquetas) {
       const termoBusca = f.filtroEtiquetas.toLowerCase();
       const possuiTag = pessoa.tags && pessoa.tags.some((t: TagItem) => t.text.toLowerCase().includes(termoBusca));
       if (!possuiTag) return false;
     }
-
-    const hasVinculoFilters = f.nomeColegiado || f.tipoRepresentacao !== 'todos' || f.atoIndicacao || f.dataAtoIndicacao || f.numeroProcesso;
+    
+    const hasVinculoFilters = f.nomeColegiado.length > 0 || f.tipoRepresentacao.length > 0 || f.atoIndicacao.length > 0 || f.dataAtoIndicacao.length > 0 || f.numeroProcesso.length > 0;
     
     if (hasVinculoFilters) {
       const pReps = representacoes.filter(r => r.representante_id === pessoa.id);
-      
       if (pReps.length === 0) return false; 
       
       const matchVinculo = pReps.some(r => {
         const c = colegiados.find(col => col.id === r.colegiado_id);
-        if (f.nomeColegiado && (!c || !c.nome_colegiado?.toLowerCase().includes(f.nomeColegiado.toLowerCase()))) return false;
-        if (f.tipoRepresentacao !== 'todos' && r.tipo_representacao?.toLowerCase() !== f.tipoRepresentacao.toLowerCase()) return false;
-        if (f.atoIndicacao && !r.ato_indicacao?.toLowerCase().includes(f.atoIndicacao.toLowerCase())) return false;
-        if (f.dataAtoIndicacao && r.data_ato_indicacao !== f.dataAtoIndicacao) return false;
-        if (f.numeroProcesso && !r.numero_processo?.toLowerCase().includes(f.numeroProcesso.toLowerCase())) return false;
+        if (f.nomeColegiado.length > 0 && (!c || !f.nomeColegiado.includes(c.nome_colegiado))) return false;
+        if (f.tipoRepresentacao.length > 0 && !f.tipoRepresentacao.includes(r.tipo_representacao)) return false;
+        if (f.atoIndicacao.length > 0 && !f.atoIndicacao.includes(r.ato_indicacao)) return false;
+        if (f.dataAtoIndicacao.length > 0 && !f.dataAtoIndicacao.includes(r.data_ato_indicacao)) return false;
+        if (f.numeroProcesso.length > 0 && !f.numeroProcesso.includes(r.numero_processo)) return false;
         return true;
       });
-      
       if (!matchVinculo) return false;
     }
-    
     return true;
   });
 
-  const opcoesNomesRepresentantes = Array.from(new Set(pessoas.map((p: any) => p.nome))).filter(Boolean) as string[];
-  const opcoesNomesColegiados = Array.from(new Set(colegiados.map((c: any) => c.nome_colegiado))).filter(Boolean) as string[];
-  const opcoesSecretarias = Array.from(new Set(pessoas.map((p: any) => p.secretaria))).filter(Boolean) as string[];
-  const opcoesDepartamentos = Array.from(new Set(pessoas.map((p: any) => p.departamento))).filter(Boolean) as string[];
+  const opcoesNomesColegiados = Array.from(new Set(colegiados.map(c => c.nome_colegiado))).filter(Boolean).sort() as string[];
+  const opcoesCoordenacoes = Array.from(new Set(colegiados.map(c => c.coordenacao))).filter(Boolean).sort() as string[];
+  const opcoesTemas = Array.from(new Set(colegiados.map(c => c.temas))).filter(Boolean).sort() as string[];
+  const opcoesStatusCol = Array.from(new Set(colegiados.map(c => c.status_vigencia))).filter(Boolean).sort() as string[];
+  const opcoesPrincipalSub = Array.from(new Set(colegiados.map(c => c.principal_subcolegiado))).filter(Boolean).sort() as string[];
+  const opcoesAtuacaoMIDR = Array.from(new Set(colegiados.map(c => c.atuacao_midr))).filter(Boolean).sort() as string[];
+  const opcoesInternoMin = Array.from(new Set(colegiados.map(c => c.interno_interministerial))).filter(Boolean).sort() as string[];
 
-  const exportarColegiadosParaExcel = () => {
-    const dados = colegiados.map(c => ({
-      'Nome do Colegiado': c.nome_colegiado,
-      'Status': c.status_vigencia,
-      'Âmbito': c.interno_interministerial,
-      'Nº Processo': c.numero_processo,
-      'Principal/Subcolegiado': c.principal_subcolegiado,
-      'Atuação MIDR': c.atuacao_midr,
-      'Temas': c.temas,
-      'Coordenação': c.coordenacao,
-      'Nº de Representantes': c.numeroRepresentantes,
-      'Etiquetas': c.tags?.map((t: any) => t.text).join(', ') || ''
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dados);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Colegiados");
-    XLSX.writeFile(workbook, "Relatorio_Colegiados.xlsx");
-  };
-
-  const exportarRepresentantesParaExcel = () => {
-    // Usa pessoasExibidas para exportar apenas os que estão visíveis no filtro atual
-    const dados = pessoasExibidas.map(p => ({
-      'Nome': p.nome,
-      'Status': p.status || 'Ativo',
-      'Cargo': p.cargo,
-      'CCE/FCE': p.cce_fce,
-      'Secretaria': p.secretaria,
-      'Sigla Secretaria': p.sigla_secretaria,
-      'Departamento': p.departamento,
-      'Sigla Departamento': p.sigla_departamento,
-      'Etiquetas': p.tags?.map((t: any) => t.text).join(', ') || ''
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dados);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Representantes");
-    XLSX.writeFile(workbook, "Relatorio_Representantes.xlsx");
-  };
+  const opcoesNomesRepresentantes = Array.from(new Set(pessoas.map(p => p.nome))).filter(Boolean).sort() as string[];
+  const opcoesStatusRep = Array.from(new Set(pessoas.map(p => p.status || 'Ativo'))).filter(Boolean).sort() as string[];
+  const opcoesCargos = Array.from(new Set(pessoas.map(p => p.cargo))).filter(Boolean).sort() as string[];
+  const opcoesCceFce = Array.from(new Set(pessoas.map(p => p.cce_fce))).filter(Boolean).sort() as string[];
+  const opcoesSecretarias = Array.from(new Set(pessoas.map(p => p.secretaria))).filter(Boolean).sort() as string[];
+  const opcoesDepartamentos = Array.from(new Set(pessoas.map(p => p.departamento))).filter(Boolean).sort() as string[];
+  
+  const opcoesTiposRep = Array.from(new Set(representacoes.map(r => r.tipo_representacao))).filter(Boolean).sort() as string[];
+  const opcoesAtos = Array.from(new Set(representacoes.map(r => r.ato_indicacao))).filter(Boolean).sort() as string[];
+  const opcoesDatasAtos = Array.from(new Set(representacoes.map(r => r.data_ato_indicacao))).filter(Boolean).sort() as string[];
+  const opcoesProcessos = Array.from(new Set(representacoes.map(r => r.numero_processo))).filter(Boolean).sort() as string[];
+  
+  const totalRepresentantes = pessoas.length;
 
   return (
     <div className="flex min-h-screen bg-[#f3f4f6]">
@@ -251,96 +209,48 @@ export default function App() {
           fetchDadosColegiados();
           setIsEditModalOpen(false);
         }
-  }}
-      />
+      }} />
 
       <EditRepresentanteBasicoModal
         isOpen={isPessoaModalOpen} onClose={() => { setIsPessoaModalOpen(false); setEditingPessoaId(null); setEditingPessoaData(null); }}
         representanteId={editingPessoaId} initialData={editingPessoaData}
         onSave={async (data) => {
-          if (!editingPessoaId) { await api.createRepresentante(data); } 
-          else { 
-            // @ts-ignore
+          if (!editingPessoaId) { await api.createRepresentante(data); } else { 
             await api.updateRepresentante(editingPessoaId, data); 
           }
           await fetchDadosRepresentantes(); setIsPessoaModalOpen(false);
         }}
         onDelete={async (id) => {
           try {
-            await api.deleteRepresentante(id);
-            toast.success('Representante e todos os seus vínculos foram excluídos!');
-            await fetchDadosRepresentantes();
-            await fetchDadosColegiados();
-            setIsPessoaModalOpen(false);
-          } catch (error: any) {
-            toast.error(error.message || 'Erro ao excluir o representante.');
-          }
+            await api.deleteRepresentante(id); toast.success('Representante e todos os seus vínculos foram excluídos!');
+            await fetchDadosRepresentantes(); await fetchDadosColegiados(); setIsPessoaModalOpen(false);
+          } catch (error: any) { toast.error(error.message || 'Erro ao excluir o representante.'); }
         }}
       />
 
-      <ViewColegiadoModal 
-        isOpen={isViewColegiadoModalOpen} 
-        onClose={() => setIsViewColegiadoModalOpen(false)} 
-        colegiado={viewingColegiadoData} 
-      />
-
-      <ViewRepresentanteModal
-        isOpen={isViewRepresentanteModalOpen}
-        onClose={() => { setIsViewRepresentanteModalOpen(false); setViewingRepresentanteData(null); }}
-        representante={viewingRepresentanteData}
-      />
+      <ViewColegiadoModal isOpen={isViewColegiadoModalOpen} onClose={() => setIsViewColegiadoModalOpen(false)} colegiado={viewingColegiadoData} />
+      <ViewRepresentanteModal isOpen={isViewRepresentanteModalOpen} onClose={() => { setIsViewRepresentanteModalOpen(false); setViewingRepresentanteData(null); }} representante={viewingRepresentanteData} />
       
       <ViewRepresentacoesModal
-        isOpen={!!viewingColegiado || !!viewingPessoa} 
-        onClose={() => { setViewingColegiado(null); setViewingPessoa(null); }}
-        colegiado={viewingColegiado}
-        representante={viewingPessoa}
-        refreshTrigger={refreshModalView} 
-        listaColegiados={colegiados}
-        onOpenVinculo={(id: number) => { 
-          setEditingRepresentacaoId(null);
-          setEditingRepresentacaoData({ colegiado_id: id });
-          setIsRepresentacaoModalOpen(true);
-        }}
-        onOpenVinculoPessoa={(id: number) => { 
-          setEditingRepresentacaoId(null);
-          setEditingRepresentacaoData({ representante_id: id });
-          setIsRepresentacaoModalOpen(true);
-        }}
-        onEditRepresentacao={(id: number) => { 
-          setEditingRepresentacaoData(representacoes.find(r => r.id === id));
-          setEditingRepresentacaoId(id);
-          setIsRepresentacaoModalOpen(true); 
-        }}
+        isOpen={!!viewingColegiado || !!viewingPessoa} onClose={() => { setViewingColegiado(null); setViewingPessoa(null); }}
+        colegiado={viewingColegiado} representante={viewingPessoa} refreshTrigger={refreshModalView} listaColegiados={colegiados}
+        onOpenVinculo={(id: number) => { setEditingRepresentacaoId(null); setEditingRepresentacaoData({ colegiado_id: id }); setIsRepresentacaoModalOpen(true); }}
+        onOpenVinculoPessoa={(id: number) => { setEditingRepresentacaoId(null); setEditingRepresentacaoData({ representante_id: id }); setIsRepresentacaoModalOpen(true); }}
+        onEditRepresentacao={(id: number) => { setEditingRepresentacaoData(representacoes.find(r => r.id === id)); setEditingRepresentacaoId(id); setIsRepresentacaoModalOpen(true); }}
         onDeleteRepresentacao={async (id: number) => {
           try {
-            await api.deleteRepresentacao(id);
-            toast.success('Vínculo excluído com sucesso!');
-            await fetchDadosRepresentantes();
-            await fetchDadosColegiados();
-            setRefreshModalView(prev => prev + 1);
-          } catch (error: any) {
-            toast.error(error.message || 'Erro ao excluir o vínculo.');
-          }
+            await api.deleteRepresentacao(id); toast.success('Vínculo excluído com sucesso!');
+            await fetchDadosRepresentantes(); await fetchDadosColegiados(); setRefreshModalView(prev => prev + 1);
+          } catch (error: any) { toast.error(error.message || 'Erro ao excluir o vínculo.'); }
         }}
       />
 
       <EditRepresentacaoModal
         isOpen={isRepresentacaoModalOpen} onClose={() => { setIsRepresentacaoModalOpen(false); setEditingRepresentacaoId(null); setEditingRepresentacaoData(null); }}
-        representacaoId={editingRepresentacaoId} initialData={editingRepresentacaoData}
-        pessoasDisponiveis={pessoas} colegiadosDisponiveis={colegiados}
+        representacaoId={editingRepresentacaoId} initialData={editingRepresentacaoData} pessoasDisponiveis={pessoas} colegiadosDisponiveis={colegiados}
         onSave={async (data) => {
-          if (!editingRepresentacaoId) { 
-            await api.createRepresentacao(data); 
-            toast.success('Vínculo criado com sucesso!');
-          } else { 
-            await api.updateRepresentacao(editingRepresentacaoId, data); 
-            toast.success('Vínculo atualizado!');
-          }
-          await fetchDadosRepresentantes(); 
-          await fetchDadosColegiados(); 
-          setRefreshModalView(prev => prev + 1);
-          setIsRepresentacaoModalOpen(false);
+          if (!editingRepresentacaoId) { await api.createRepresentacao(data); toast.success('Vínculo criado com sucesso!'); } else { await api.updateRepresentacao(editingRepresentacaoId, data); toast.success('Vínculo atualizado!'); }
+          await fetchDadosRepresentantes(); await fetchDadosColegiados(); setRefreshModalView(prev => prev + 1); setIsRepresentacaoModalOpen(false);
         }}
       />
 
@@ -354,34 +264,29 @@ export default function App() {
         <div className="flex-1 p-4 md:p-8">
           {activeMenuItem === 'colegiados' && (
             <>
-              <div className="mb-6"><FilterSection filters={colegiadosFilters} onFilterChange={handleColegiadosFilterChange} onClearFilters={handleColegiadosClearFilters} onApplyFilters={handleColegiadosApplyFilters} tags={colegiadosTags} onRemoveTag={handleColegiadosRemoveTag} /></div>
-              <SummaryBar page="colegiados" totalColegiados={totalColegiados} totalRepresentantes={totalRepresentantes} />
-              <div className="flex justify-between items-center mb-6 mt-6">
-                <h1 className="text-2xl font-bold">Quadro de Representantes</h1>
-                <div className="flex gap-3">
-                  <Button onClick={exportarRepresentantesParaExcel} variant="outline" className="border-[#003366] text-[#003366] hover:bg-[#f3f4f6] flex items-center gap-2">
-                    <Download size={16} /> Exportar
-                  </Button>
-                  <Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button>
-                </div>
+              <div className="mb-6">
+                <FilterSection 
+                  filters={colegiadosFilters} 
+                  onFilterChange={handleColegiadosFilterChange} 
+                  onClearFilters={handleColegiadosClearFilters} 
+                  onApplyFilters={handleColegiadosApplyFilters} 
+                  opcoesNomes={opcoesNomesColegiados}
+                  opcoesCoordenacoes={opcoesCoordenacoes}
+                  opcoesTemas={opcoesTemas}
+                  opcoesStatus={opcoesStatusCol}
+                  opcoesPrincipalSub={opcoesPrincipalSub}
+                  opcoesAtuacao={opcoesAtuacaoMIDR}
+                  opcoesInternoMin={opcoesInternoMin}
+                />
               </div>
+              <SummaryBar page="colegiados" totalColegiados={colegiadosExibidos.length} totalRepresentantes={totalRepresentantes} />
+              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Gestão de Colegiados</h1><Button onClick={() => { setEditingColegiado(null); setIsEditModalOpen(true); }}>+ Novo Colegiado</Button></div>
               <ColegiadosTable 
-                colegiados={colegiados} 
-                onEdit={(id) => { 
-                  setEditingColegiado(colegiados.find(c => c.id === id)); 
-                  setIsEditModalOpen(true); 
-                }} 
-                onViewRepresentantes={(id) => {
-                  setViewingColegiado({ 
-                    id, 
-                    nome_colegiado: colegiados.find(c => c.id === id)?.nome_colegiado 
-                  });
-                }} 
+                colegiados={colegiadosExibidos} 
+                onEdit={(id) => { setEditingColegiado(colegiados.find(c => c.id === id)); setIsEditModalOpen(true); }} 
+                onViewRepresentantes={(id) => { setViewingColegiado({ id, nome_colegiado: colegiados.find(c => c.id === id)?.nome_colegiado }); }} 
                 onTagsChange={handleColegiadoTagsChange} 
-                onViewColegiado={(id: number) => {
-                  setViewingColegiadoData(colegiados.find(c => c.id === id));
-                  setIsViewColegiadoModalOpen(true);
-                }}
+                onViewColegiado={(id: number) => { setViewingColegiadoData(colegiados.find(c => c.id === id)); setIsViewColegiadoModalOpen(true); }}
               />
             </>
           )}
@@ -398,43 +303,22 @@ export default function App() {
                   opcoesColegiados={opcoesNomesColegiados}
                   opcoesSecretarias={opcoesSecretarias}
                   opcoesDepartamentos={opcoesDepartamentos}
+                  opcoesCargos={opcoesCargos}
+                  opcoesCceFce={opcoesCceFce}
+                  opcoesStatus={opcoesStatusRep}
+                  opcoesTiposRep={opcoesTiposRep}
+                  opcoesAtos={opcoesAtos}
+                  opcoesDatasAtos={opcoesDatasAtos}
+                  opcoesProcessos={opcoesProcessos}
                 />
-                
               </div>
-              <SummaryBar page="representantes" totalColegiados={totalColegiados} totalRepresentantes={pessoasExibidas.length} />
-              <div className="flex justify-between items-center mb-6 mt-6">
-                <h1 className="text-2xl font-bold">Gestão de Colegiados</h1>
-                <div className="flex gap-3">
-                  <Button onClick={exportarColegiadosParaExcel} variant="outline" className="border-[#003366] text-[#003366] hover:bg-[#f3f4f6] flex items-center gap-2">
-                    <Download size={16} /> Exportar
-                  </Button>
-                  <Button onClick={() => { setEditingColegiado(null); setIsEditModalOpen(true); }}>+ Novo Colegiado</Button>
-                </div>
-              </div>
+              <SummaryBar page="representantes" totalColegiados={colegiados.length} totalRepresentantes={pessoasExibidas.length} />
+              <div className="flex justify-between items-center mb-6 mt-6"><h1 className="text-2xl font-bold">Quadro de Representantes</h1><Button onClick={() => { setEditingPessoaData(null); setEditingPessoaId(null); setIsPessoaModalOpen(true); }}>+ Novo Representante</Button></div>
               <RepresentantesTable
-                representantes={pessoasExibidas.map((p: any) => ({
-                  id: p.id,
-                  nome: p.nome,
-                  status: p.status || 'Ativo',
-                  tags: p.tags || []
-                }))}
-                
-                onViewRepresentante={(id: number) => {
-                  setViewingRepresentanteData(pessoas.find((p: any) => p.id === id));
-                  setIsViewRepresentanteModalOpen(true);
-                }}
-
-                onEditRepresentante={(id: number) => { 
-                  setEditingPessoaData(pessoas.find((p: any) => p.id === id)); 
-                  setEditingPessoaId(id); 
-                  setIsPessoaModalOpen(true); 
-                }}
-                
-                onViewRepresentacoes={(id: number) => {
-                  const pessoa = pessoas.find((p: any) => p.id === id);
-                  if (pessoa) setViewingPessoa({ id: pessoa.id, nome: pessoa.nome });
-                }}
-                
+                representantes={pessoasExibidas.map((p: any) => ({ id: p.id, nome: p.nome, status: p.status || 'Ativo', tags: p.tags || [] }))}
+                onViewRepresentante={(id: number) => { setViewingRepresentanteData(pessoas.find((p: any) => p.id === id)); setIsViewRepresentanteModalOpen(true); }}
+                onEditRepresentante={(id: number) => { setEditingPessoaData(pessoas.find((p: any) => p.id === id)); setEditingPessoaId(id); setIsPessoaModalOpen(true); }}
+                onViewRepresentacoes={(id: number) => { const pessoa = pessoas.find((p: any) => p.id === id); if (pessoa) setViewingPessoa({ id: pessoa.id, nome: pessoa.nome }); }}
                 onTagsChange={handleRepresentanteTagsChange}
               />
             </>

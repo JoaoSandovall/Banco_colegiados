@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogFooter } from "./ui/dialog";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogTitle} from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Label } from "./ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { Pencil, Users, UserPlus, Trash2 } from 'lucide-react';
+import { Pencil, UserPlus, Trash2 } from 'lucide-react';
 import api from '../service/api';
 
 interface ViewRepresentacoesModalProps {
@@ -19,7 +18,7 @@ interface ViewRepresentacoesModalProps {
   onOpenVinculo?: (colegiadoId: number) => void;
   onOpenVinculoPessoa?: (representanteId: number) => void;
   onEditRepresentacao?: (representacaoId: number) => void;
-  onDeleteRepresentacao?: (representacaoId: number) => void; // NOVO
+  onDeleteRepresentacao?: (representacaoId: number) => void;
   refreshTrigger?: number;
   listaColegiados?: any[]; 
 }

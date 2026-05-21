@@ -1,4 +1,3 @@
-import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -11,7 +10,6 @@ interface ViewRepresentanteModalProps {
   representante: RepresentanteBase | null;
 }
 
-// O ERRO ACONTECE SE FALTAR ESTA PALAVRA "export" AQUI EMBAIXO:
 export function ViewRepresentanteModal({ isOpen, onClose, representante }: ViewRepresentanteModalProps) {
   if (!representante) return null;
 
