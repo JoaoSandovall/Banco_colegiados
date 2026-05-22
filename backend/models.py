@@ -16,9 +16,9 @@ class Colegiado(Base):
     atuacao_midr = Column(String)
     numero_processo = Column(String, nullable=True)
     subcolegiado_ligado_ao = Column(String, nullable=True)
+    temas = Column(String, nullable=True)
     tags = Column(JSON, default=list)
     
-    # Relação com a tabela de participações
     representacoes = relationship("Representacao", back_populates="colegiado", cascade="all, delete-orphan")
 
 class Representante(Base):
@@ -36,7 +36,6 @@ class Representante(Base):
     tags = Column(JSON, default=[])
     representacoes = relationship("Representacao", back_populates="representante", cascade="all, delete-orphan")
     
-
 class Representacao(Base):
     __tablename__ = "representacoes"
 

@@ -32,6 +32,7 @@ class ColegiadoBase(BaseModel):
     atuacao_midr: AtuacaoMIDR 
     numero_processo: Optional[str] = None
     subcolegiado_ligado_ao: Optional[str] = None
+    temas: Optional[str] = None
     tags: Optional[List[Dict[str, Any]]] = []
     
     @model_validator(mode='after')

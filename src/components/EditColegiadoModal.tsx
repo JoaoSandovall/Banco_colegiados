@@ -17,6 +17,21 @@ interface EditColegiadoModalProps {
   onDelete?: (id: number) => Promise<void>;
 }
 
+const TEMAS_EXCLUSIVOS = [
+  "Meio Ambiente, Mudança do Clima e Bioeconomia",
+  "Desenvolvimento Regional e Urbano",
+  "Gestão Pública, Governança e Controle",
+  "Defesa, Soberania e Segurança Pública",
+  "Recursos Hídricos e Saneamento",
+  "Economia, Finanças e Comércio Exterior",
+  "Desenvolvimento Social, Igualdade e Cidadania",
+  "Infraestrutura, Energia e Transportes",
+  "Proteção e Defesa Civil",
+  "Saúde Pública e Segurança Alimentar",
+  "Ciência, Tecnologia e Inovação",
+  "Agricultura, Pesca e Abastecimento"
+];
+
 export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados = [], onSave, onDelete }: EditColegiadoModalProps) {
   const defaultFormData = {
     nome_colegiado: "",
@@ -44,7 +59,7 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
           objeto_finalidade: colegiado.objeto_finalidade || "",
           principal_subcolegiado: colegiado.principal_subcolegiado || "",
           interno_interministerial: colegiado.interno_interministerial || "",
-          temas: colegiado.temas || "",
+          temas: colegiado.temas || colegiado.tema || "", 
           link_normativo: colegiado.link_normativo || "",
           coordenacao: colegiado.coordenacao || "",
           atuacao_midr: colegiado.atuacao_midr || "",
@@ -107,10 +122,16 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
     try {
       setIsLoading(true);
 
+      const payload = {
+        ...formData,
+        tema: formData.temas, 
+        temas: formData.temas  
+      };
+
       if (colegiado) {
-        await api.updateColegiado(colegiado.id, formData);
+        await api.updateColegiado(colegiado.id, payload);
       } else {
-        await api.createColegiado(formData);
+        await api.createColegiado(payload);
       }
       
       alert("Colegiado salvo com sucesso!");
@@ -149,10 +170,11 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
               <div className="grid gap-2">
                 <Label>Status (Vigência) *</Label>
                 <Select value={formData.status_vigencia} onValueChange={(v: string) => handleSelectChange("status_vigencia", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Ativo">Ativo</SelectItem>
                     <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="Em estruturação">Em estruturação</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -160,7 +182,7 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
               <div className="grid gap-2">
                 <Label>Âmbito (Interno/Interministerial) *</Label>
                 <Select value={formData.interno_interministerial} onValueChange={(v: string) => handleSelectChange("interno_interministerial", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Interno">Interno</SelectItem>
                     <SelectItem value="Interministerial">Interministerial</SelectItem>
@@ -192,7 +214,7 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
                     }
                   }}
                 >
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Principal">Principal</SelectItem>
                     <SelectItem value="Subcolegiado">Subcolegiado</SelectItem>
@@ -204,7 +226,7 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
                 <div className="grid gap-2">
                   <Label>Subcolegiado ligado ao</Label>
                   <Select value={formData.subcolegiado_ligado_ao} onValueChange={(v: string) => handleSelectChange("subcolegiado_ligado_ao", v)}>
-                    <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                    <SelectTrigger className="bg-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value=" ">Nenhum</SelectItem>
                       {opcoesLigacao.map((c) => (
@@ -222,7 +244,7 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
               <div className="grid gap-2">
                 <Label>Atuação MIDR *</Label>
                 <Select value={formData.atuacao_midr} onValueChange={(v: string) => handleSelectChange("atuacao_midr", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Preside">Preside</SelectItem>
                     <SelectItem value="Coordena">Coordena</SelectItem>
@@ -234,7 +256,16 @@ export function EditColegiadoModal({ isOpen, onClose, colegiado, listaColegiados
 
             <div className="grid gap-2">
               <Label>Temas *</Label>
-              <Input name="temas" value={formData.temas} onChange={handleChange} />
+              <Select value={formData.temas} onValueChange={(v: string) => handleSelectChange("temas", v)}>
+                <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione o tema..." /></SelectTrigger>
+                <SelectContent>
+                  {TEMAS_EXCLUSIVOS.map((tema) => (
+                    <SelectItem key={tema} value={tema}>
+                      {tema}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-2">
