@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import cast, String
-from typing import List, Optional 
+from typing import List, Optional
 from database import get_db
 from sqlalchemy.exc import IntegrityError
 import models, schemas, database
@@ -12,7 +12,7 @@ app = FastAPI(title="Sistema de Gestão de Colegiados - MIDR")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -37,7 +37,7 @@ def get_colegiados(
         
     return query.all()
 
-@app.get("/colegiados/")
+@app.get("/colegiados/", response_model=List[schemas.Colegiado])
 def listar_colegiados(
     nomeColegiado: Optional[str] = None,
     coordenacao: Optional[str] = None,
@@ -59,16 +59,12 @@ def listar_colegiados(
         query = query.filter(models.Colegiado.temas.ilike(f"%{temas.strip()}%"))
     if status and status.lower() != "todos":
         query = query.filter(models.Colegiado.status_vigencia.ilike(f"%{status.strip()}%"))
-        
     if principalSub and principalSub.lower() != "todos":
         query = query.filter(models.Colegiado.principal_subcolegiado.ilike(f"%{principalSub.strip()}%"))
-        
     if atuacaoMIDR and atuacaoMIDR.lower() != "todos":
         query = query.filter(models.Colegiado.atuacao_midr.ilike(f"%{atuacaoMIDR.strip()}%"))
-        
     if internoMinisterial and internoMinisterial.lower() != "todos":
         query = query.filter(models.Colegiado.interno_interministerial.ilike(f"%{internoMinisterial.strip()}%"))        
-
     if filtroEtiquetas:
         query = query.filter(cast(models.Colegiado.tags, String).ilike(f"%{filtroEtiquetas.strip()}%"))
 
