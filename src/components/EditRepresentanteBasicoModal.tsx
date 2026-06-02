@@ -7,6 +7,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Plus, Trash2, Minus } from 'lucide-react';
 
+const AutocompleteInput = ({ value, onChange, options, placeholder, id }: { value: string, onChange: (v: string) => void, options: string[], placeholder?: string, id?: string }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = options.filter(opt => opt.toLowerCase().includes((value || '').toLowerCase()) && opt !== value);
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <Input
+        id={id} value={value || ''}
+        onChange={(e) => { onChange(e.target.value); setIsOpen(true); }}
+        onFocus={() => setIsOpen(true)}
+        placeholder={placeholder}
+        className="w-full h-11 border border-gray-400 rounded-md px-3 focus-visible:ring-1 focus-visible:ring-[#003366]"
+        autoComplete="off"
+      />
+      {isOpen && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {filtered.map((opt, index) => (
+            <div
+              key={index}
+              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-700 border-b border-gray-50 last:border-0"
+              onClick={() => { onChange(opt); setIsOpen(false); }}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export interface RepresentanteBase {
   id?: number;
   nome: string;
@@ -25,7 +66,8 @@ interface EditRepresentanteBasicoModalProps {
   representanteId?: number | null;
   onSave: (data: Omit<RepresentanteBase, 'id'>) => Promise<void>;
   onDelete?: (id: number) => Promise<void>;
-  initialData?: RepresentanteBase | null; 
+  initialData?: RepresentanteBase | null;
+  listaRepresentantes?: any[];
 }
 
 const SECRETARIAS_OPCOES_INICIAIS = [
@@ -65,7 +107,8 @@ export function EditRepresentanteBasicoModal({
   representanteId,
   onSave,
   onDelete,
-  initialData
+  initialData,
+  listaRepresentantes = []
 }: EditRepresentanteBasicoModalProps) {
   
   const [loading, setLoading] = useState(false);
@@ -80,6 +123,9 @@ export function EditRepresentanteBasicoModal({
   const [formData, setFormData] = useState({
     nome: '', secretaria: '', sigla_secretaria: '', departamento: '', sigla_departamento: '', cargo: '', cce_fce: '', status: 'Ativo'
   });
+
+  const opcoesDepartamentos = Array.from(new Set(listaRepresentantes.map(r => r.departamento).filter(Boolean))).sort() as string[];
+  const opcoesCargos = Array.from(new Set(listaRepresentantes.map(r => r.cargo).filter(Boolean))).sort() as string[];
 
   useEffect(() => {
     if (initialData && isOpen) {
@@ -225,7 +271,13 @@ export function EditRepresentanteBasicoModal({
 
             <div className="mb-6">
               <Label htmlFor="cargo" className="block mb-2 text-[15px] font-semibold text-gray-800">Cargo do Representante</Label>
-              <Input id="cargo" name="cargo" value={formData.cargo} onChange={handleChange} className="w-full h-11 border border-gray-400 rounded-md px-3" />
+              <AutocompleteInput 
+                id="cargo"
+                value={formData.cargo || ""} 
+                onChange={(val: string) => handleSelectChange('cargo', val)}
+                options={opcoesCargos}
+                placeholder="Ex: Analista de Sistemas..."
+              />
             </div>
 
             <hr className="my-8 border-gray-200" />
@@ -271,18 +323,13 @@ export function EditRepresentanteBasicoModal({
 
             <div className="mb-2 w-full">
               <Label htmlFor="departamento" className="block mb-2 text-[15px] font-semibold text-gray-800">Departamento do Representante</Label>
-              <Select value={formData.departamento || ""} onValueChange={(val: string) => handleSelectChange('departamento', val)}>
-                <SelectTrigger className="w-full bg-white h-11 border border-gray-400 rounded-md text-left px-3 overflow-hidden [&>span]:truncate">
-                  <SelectValue placeholder="Selecione o departamento..." />
-                </SelectTrigger>
-                <SelectContent className="border border-gray-300 max-w-[90vw]">
-                  {formData.departamento && (
-                      <SelectItem key={formData.departamento} value={formData.departamento} className="py-2 truncate pr-2" title={formData.departamento}>
-                        {formData.departamento}
-                      </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+              <AutocompleteInput 
+                id="departamento"
+                value={formData.departamento || ""} 
+                onChange={(val: string) => handleSelectChange('departamento', val)}
+                options={opcoesDepartamentos}
+                placeholder="Ex: Coordenação de Governança - CGPRO"
+              />
             </div>
           </div>
           

@@ -214,8 +214,9 @@ export default function App() {
       <EditRepresentanteBasicoModal
         isOpen={isPessoaModalOpen} onClose={() => { setIsPessoaModalOpen(false); setEditingPessoaId(null); setEditingPessoaData(null); }}
         representanteId={editingPessoaId} initialData={editingPessoaData}
+        listaRepresentantes={pessoas}
         onSave={async (data) => {
-          if (!editingPessoaId) { await api.createRepresentante(data); } else { 
+          if (!editingPessoaId) { await api.createRepresentante(data); } else {
             await api.updateRepresentante(editingPessoaId, data); 
           }
           await fetchDadosRepresentantes(); setIsPessoaModalOpen(false);
