@@ -1,4 +1,4 @@
-const API_URL = (import.meta as any).env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = "https://banco-colegiados.onrender.com/";
 
 export interface ColegiadoFilters {
   nomeColegiado?: string;
