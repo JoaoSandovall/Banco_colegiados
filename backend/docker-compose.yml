@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  api-colegiados:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api_colegiados_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/banco_colegiados.db:/app/banco_colegiados.db
+    restart: unless-stopped
