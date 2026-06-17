@@ -17,6 +17,8 @@ import { Button } from './components/ui/button';
 import { TagItem } from './components/TagsManager';
 import { ViewColegiadoModal } from './components/ViewColegiadoModal';
 
+// teste
+
 export default function App() {
   const [isViewColegiadoModalOpen, setIsViewColegiadoModalOpen] = useState(false);
   const [viewingColegiadoData, setViewingColegiadoData] = useState<any | null>(null);
